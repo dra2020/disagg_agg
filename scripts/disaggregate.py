@@ -55,7 +55,8 @@ def make_block_props_map(source_props_path, block_map_path, block_pop_map, sourc
 
     log.dprint("Build block to fields map (disaggregate)")
     print("Build block to fields map (disaggregate)")
-    final_blk_map = {}    # {blkid: {prop1: val1, prop2: val2, ...}, ...}
+    final_blk_map = {}          # {blkid: {prop1: val1, prop2: val2, ...}, ...}
+    failed_props_set = set()    # For logging
     for src_value in tqdm(src_blk_map.values()):
         sum_blk_pop = 0
         for blk_tuple in src_value[1]:
@@ -65,18 +66,16 @@ def make_block_props_map(source_props_path, block_map_path, block_pop_map, sourc
             one_blk = {}
             source_props_item = source_props.loc[src_value[0]]
             for prop_key, prop_value in source_props_item.items():
-                if isinstance(prop_value, numbers.Number) and aggregate.ok_to_agg(prop_key):
+                if aggregate.ok_to_agg(prop_key):   # isinstance(prop_value, numbers.Number)
                     try:
                         # add float/int props only
                         one_blk[prop_key] = round(float(prop_value) * blk_pct, 3)
                     except:
-                        #ignore
-                        if prop_key[0:1] == 'G':
-                            log.dprint("Prop Error: ", prop_key, ", ", prop_value, ", source_key: ", source_props.loc[src_value[0], "" if use_index_for_source_key else source_key])
-                            one_blk[prop_key] = 0
-                        dummy = 0
+                        failed_props_set.add(prop_key)
 
             final_blk_map[blk_tuple[0]] = one_blk
     
+    if not bool(failed_props_set):
+        log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
             
