@@ -43,8 +43,7 @@ def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, blo
                     else:
                         source_props_total[key] = num
             except:
-                #ignore
-                dummy = 0
+                pass
             
     # Build map of total values for all number fields in agg
     agg_keys = agg_data.keys()
@@ -62,8 +61,7 @@ def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, blo
                     else:
                         agg_props_total[key] = num
             except:
-                #ignore
-                dummy = 0
+                pass
 
     # Compare
     diff_props = {}
@@ -95,8 +93,7 @@ def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, blo
                         else:
                             block_props_total[field] = num
                 except:
-                    #ignore
-                    dummy = 0
+                    pass
 
         diff_props_block = {}
         for key, source_value in source_props_total.items():
