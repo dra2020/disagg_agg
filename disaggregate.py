@@ -10,10 +10,8 @@ import csv
 from tqdm import tqdm
 import numbers
 
-import aggregate
-import agg_logging as log
 
-def make_block_props_map(source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key):
+def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
     """
         source_props is geojson or shapefile
         block_map {blkid: source_key, ...}
@@ -66,7 +64,7 @@ def make_block_props_map(source_props_path, block_map_path, block_pop_map, sourc
             one_blk = {}
             source_props_item = source_props.loc[src_value[0]]
             for prop_key, prop_value in source_props_item.items():
-                if aggregate.ok_to_agg(prop_key):   # isinstance(prop_value, numbers.Number)
+                if ok_to_agg(prop_key):   # isinstance(prop_value, numbers.Number)
                     try:
                         # add float/int props only
                         one_blk[prop_key] = round(float(prop_value) * blk_pct, 3)

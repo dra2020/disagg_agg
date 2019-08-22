@@ -7,39 +7,11 @@ import zipfile
 import os
 import json
 
-import statecodes
+from . import statecodes
 
 # *********************************************************
 # Helpers
 # *********************************************************
-
-def make_block_pop_map18(state, stateCode, block_pop_csv_path, out_root):
-    """
-    Given CSV with fields: 
-        GEOID,STATE,SUMLEV,STATE (FIPS),COUNTY,TRACT,BG,BLOCK,CD,VTD,NAME,
-          TOTAL,WHITE,BLACK,NATIVE,ASIAN,PACIFIC,OTHER,MIXED,HISPANIC,
-          TOTAL18,WHITE18,BLACK18,NATIVE18,ASIAN18,PACIFIC18,OTHER18,MIXED18,HISPANIC18
-        make a map of GEOID (formed from those fields) -> Total18 (total voting age population)
-    """
-    block_pop_map = {}
-    csv_row_count = 0
-    totalPop = 0
-    with open(block_pop_csv_path) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=",")
-        for row in csv_reader:
-            if csv_row_count > 0:
-                geoid = row[0]
-                value = float(row[20])
-                block_pop_map[geoid] = value
-                totalPop += value
-            csv_row_count += 1
-
-    print("Num blocks: ", csv_row_count - 1, ", Total Voting Age Pop: ", totalPop)
-    block_map_path = get_made_file_paths(state, stateCode, out_root)[3]
-    print("Write block map ", block_map_path)
-    with open(block_map_path, "w") as outf:
-        json.dump(block_pop_map, outf, ensure_ascii=False)
-
 
 def unzip_shapes(zip_path, shapes_path):
     if (not os.path.exists(shapes_path)):
@@ -143,5 +115,3 @@ def prepare(state):
     block_shapes_zip_path = out_root + state + "/2010/tl_2010_" + stateCode + "_tabblock10.zip"
     unzip_block_shapes(state, stateCode, block_shapes_zip_path, out_root)
 
-    block_pop_csv_path = in_root + state + "/" + state.lower() + "2010-TABBLOCK.csv"
-    make_block_pop_map18(state, stateCode, block_pop_csv_path, out_root)

@@ -2,9 +2,7 @@
 #
 # 2019
 
-import pandas as pd
 from tqdm import tqdm
-
 import geopandas as gpd
 import pprint
 import json
@@ -12,19 +10,30 @@ import os
 import csv
 
 # *** Dependent modules that are part of the same repository
-import statecodes                   # Maps two-letter state codes to two-digit Census state codes
-import area_contains as ac          # Given 2 geometries produces map (dictionary) from smaller to larger
-import disaggregate as disagg
-import aggregate as agg
-import disagg_agg_verify as verify
-import agg_logging as log
+from . import statecodes                   # Maps two-letter state codes to two-digit Census state codes
+from . import area_contains as ac          # Given 2 geometries produces map (dictionary) from smaller to larger
+from . import disaggregate as disagg
+from . import aggregate as agg
+from . import disagg_agg_verify as verify
+from . import agg_logging as log
 
 # *** Dependent module that must be supplied by the user
 #   prepare.prepare(state) is a hook to do any file moving/copying/unzipping/preprocessing
 #   prepare.get_keys(state) returns a tuple of keys the three geometries (source_key, dest_key, block_key) (ex. GEOID10)
 #   prepare.get_paths(state) returns a map (dictionary) of paths to all of the input and output files
 #
-import prepare_disagg_agg_example as prepare
+from . import prepare_disagg_agg_example as prepare
+
+def ok_to_agg(prop):
+    """
+    Filter out props that we know we shouldn't aggregate
+    """
+    return (prop.lower()[0:4] != 'name' and prop.lower()[0:6] != 'county' and prop.lower()[0:8] != 'precinct' and prop.lower() != 'id' and
+            prop.lower() != 'objectid' and prop.lower()[0:4] != 'area' and prop.lower() != 'pct' and prop.lower() != 'district' and
+            prop.lower()[0:4] != 'fips' and prop.lower()[0:3] != 'cty' and prop.lower()[0:4] != 'ward' and prop.lower()[0:5] != 'geoid' and
+            prop.lower() != 'blkgrp' and prop.lower()[0:6] != 'logrec' and prop.lower() != 'state' and prop.lower() != 'sumlevel' and
+            prop.lower() != 'tract')
+
 
 def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_path, block_key, block2geo_path, use_index_for_large_key=False, sourceIsBlkGrp=False):
     """
@@ -48,7 +57,7 @@ def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_pa
         block_pop_map = json.load(block_pop_json)
 
     # Option here to supply different disaggregation algorithm for isDemographicData == True
-    final_blk_map = disagg.make_block_props_map(large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key)
+    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg)
 
     log.dprint('Writing block_data_from_geo\n')
     with open(block_data_from_geo_path, 'w') as outf:
@@ -60,7 +69,7 @@ def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, lar
     Invokes aggregate: takes smaller (block) data, smaller-larger mapping, and produces larger (precinct) data (GEOJSON)
     """
     log.dprint ('Making dest_data:\n\t(', block_data_path, ',', block2geo_path, ') ==>\n\t\t', dest_data_path)
-    aggregated_props = agg.make_aggregated_props(block_data_path, block2geo_path, large_geo_key)
+    aggregated_props = agg.make_aggregated_props(block_data_path, block2geo_path, large_geo_key, ok_to_agg)
     log.dprint('Writing dest data\n')
     with open(dest_data_path, 'w') as outf:
         json.dump(aggregated_props, outf, ensure_ascii=False)
@@ -194,7 +203,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False):
             if (source_data_path != None and agg_data_from_source_path != None):
                 log.dprint("*******************************************")
                 log.dprint("**************** 6: Verify ****************")
-                verify.verify_source_vs_aggregated(source_data_path, agg_data_from_source_path) #, block_data_from_source_path)
+                verify.verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, ok_to_agg) #, block_data_from_source_path)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tSource data: ", source_geo_path)
@@ -204,9 +213,9 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False):
 # ****************************************************************
 # Example Main
 
-try:
-    state = "GA"
-    prepare.prepare(state)
-    process_state(state, [1,2,3,4,6])
-finally:
-    log.close()
+#try:
+    #state = "GA"
+    #prepare.prepare(state)
+    #process_state(state, [1,2,3,4,6])
+#finally:
+    #log.close()

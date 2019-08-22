@@ -9,7 +9,7 @@ import geopandas as gpd
 import pprint
 import json
 
-import agg_logging as log
+from . import agg_logging as log
 
 def make_target_source_allmap(source, target, source_key, target_key, use_index_for_source_key):
     """

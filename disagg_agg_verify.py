@@ -12,10 +12,9 @@ import json
 import math
 import numbers
 
-import aggregate
-import agg_logging as log
+from . import agg_logging as log
 
-def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, block_data_path=None):
+def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, ok_to_agg, block_data_path=None):
     """
         Function totals each numeric field across source data rows, does the same across aggregated data rows,
         and then compares. The expectation is that the diff of each field between the original source (that got disaggregated) and resulting
@@ -36,7 +35,7 @@ def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, blo
         for key in source_keys:
             try:
                 value = source_data.loc[i, key]
-                if aggregate.ok_to_agg(key):
+                if ok_to_agg(key):
                     num = float(value)
                     if key in source_props_total:
                         source_props_total[key] += num
