@@ -45,7 +45,7 @@ def get_made_file_paths(state, stateCode, out_root):
 # Externally called functions
 # *********************************************************
 
-def get_paths(state):
+def get_paths(state, isElections=True):
     stateCode = statecodes.make_state_codes()[state]
     in_root = '../Documents/Census/'
     out_root = '../Documents/Census/'
@@ -86,7 +86,7 @@ def get_paths(state):
     }
 
 
-def get_keys(state):
+def get_keys(state, isElections=True):
     block_key = "GEOID10"
     dest_key = "GEOID10"
     source_key = None
@@ -100,7 +100,7 @@ def get_keys(state):
     return source_key, dest_key, block_key, use_index_for_source_key
 
 
-def prepare(state):
+def prepare(state, isElections=True):
     stateCode = statecodes.make_state_codes()[state]
     in_root = "./inputs/"
     out_root = "../Documents/Census/"

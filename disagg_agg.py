@@ -39,6 +39,10 @@ def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_pa
     """
     Invokes area_contains: takes larger (precinct) geometry, smaller (block) geometry, and produces smaller ==> larger mapping (JSON)
     """
+    if os.path.exists(block2geo_path):
+        log.dprint("Block map already exists: ", block2geo_path)
+        return
+
     log.dprint('Making block map:\n\t(', large_geo_path, ',', block_geo_path, ') ==>\n\t\t', block2geo_path) 
     block_map = ac.make_target_source_map(large_geo_path, block_geo_path, large_geo_key, block_key, use_index_for_large_key, sourceIsBlkGrp)
 
@@ -120,9 +124,9 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False):
     """
 
     stateCode = statecodes.make_state_codes()[state]      #  2-digit state census code
-    source_key, dest_key, block_key, use_index_for_source_key = prepare.get_keys(state)
+    source_key, dest_key, block_key, use_index_for_source_key = prepare.get_keys(state, not isDemographicData)
 
-    paths = prepare.get_paths(state)
+    paths = prepare.get_paths(state, not isDemographicData)
     source_geo_path = paths["source_geo_path"]
     source_data_path = paths["source_data_path"]
     block_geo_path = paths["block_geo_path"]
