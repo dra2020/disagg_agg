@@ -16,7 +16,9 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
         source_props is geojson or shapefile
         block_map {blkid: source_key, ...}
         source_key is key field for source_props; value used to lookup in block_map; we always treat it as a string
-        block_pop_map {blkid: population, ...} 
+        block_pop_map is either
+            {blkid: population, ...} or
+            {blkid: {'TOT': 3.0, 'ASN': 1.0, ..., 'TOT18': 2.0}}
         use_index_for_source_key: True ==> Use geopandas index as key
     """
 
@@ -38,7 +40,8 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
             if value == "":
                 # Means block was not in any larger (source) geometry
                 count_blocks_not_in_source += 1
-                error_block_population = block_pop_map[key]
+                block_population = block_pop_map[key]
+                error_block_population = block_population["TOT"] if isinstance(block_population, dict) else block_population
                 if error_block_population > 0:
                     log.dprint("Block not in source: ", key, ", Pop: ", error_block_population)
                     count_blocks_not_in_source_with_nonzero_pop += 1
@@ -58,9 +61,11 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
     for src_value in tqdm(src_blk_map.values()):
         sum_blk_pop = 0
         for blk_tuple in src_value[1]:
-            sum_blk_pop += blk_tuple[1]
+            sum_blk_pop += blk_tuple[1]["TOT18"] if isinstance(blk_tuple[1], dict) else blk_tuple[1]
+
         for blk_tuple in src_value[1]:
-            blk_pct = 0 if (sum_blk_pop == 0) else (blk_tuple[1] / sum_blk_pop)
+            blk_pop = blk_tuple[1]["TOT18"] if isinstance(blk_tuple[1], dict) else blk_tuple[1]
+            blk_pct = 0 if (sum_blk_pop == 0) else (blk_pop / sum_blk_pop)
             one_blk = {}
             source_props_item = source_props.loc[src_value[0]]
             for prop_key, prop_value in source_props_item.items():
