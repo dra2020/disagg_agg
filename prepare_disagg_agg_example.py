@@ -45,7 +45,7 @@ def get_made_file_paths(state, stateCode, out_root):
 # Externally called functions
 # *********************************************************
 
-def get_paths(state, isElections=True):
+def get_paths(state, isElections=True, year=2016    ):
     stateCode = statecodes.make_state_codes()[state]
     in_root = '../Documents/Census/'
     out_root = '../Documents/Census/'

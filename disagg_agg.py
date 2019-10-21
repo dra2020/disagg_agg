@@ -79,7 +79,7 @@ def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, lar
         json.dump(aggregated_props, outf, ensure_ascii=False)
 
 
-def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False): 
+def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, year=2016): 
     """
     This function drives the steps in the disaggregation/aggregation process.
     Each step reads from its input files and writes to its output file, so steps can be taken one at a time if desired
@@ -126,7 +126,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False):
     stateCode = statecodes.make_state_codes()[state]      #  2-digit state census code
     source_key, dest_key, block_key, use_index_for_source_key = prepare.get_keys(state, not isDemographicData)
 
-    paths = prepare.get_paths(state, not isDemographicData)
+    paths = prepare.get_paths(state, not isDemographicData, year)
     source_geo_path = paths["source_geo_path"]
     source_data_path = paths["source_data_path"]
     block_geo_path = paths["block_geo_path"]
