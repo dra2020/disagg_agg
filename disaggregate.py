@@ -46,8 +46,10 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
                     log.dprint("Block not in source: ", key, ", Pop: ", error_block_population)
                     count_blocks_not_in_source_with_nonzero_pop += 1
             else:
-                source_item = src_blk_map[int(value) if use_index_for_source_key else value]
-                source_item[1].append((key, block_pop_map[key]))
+                sb_map_key = int(value) if use_index_for_source_key else value
+                if sb_map_key in src_blk_map:
+                    source_item = src_blk_map[sb_map_key]
+                    source_item[1].append((key, block_pop_map[key]))
         else:
             log.dprint("Block not in block_pop_map: ", key)
 
