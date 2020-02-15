@@ -54,22 +54,28 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
             for j in possible_matches:
                 count_in_possible_matches += 1
                 target_shape = target.loc[j, 'geometry']
+                target_loc_key = target.loc[j, target_key]
                 try:
                     pct_in = source_row_shape.intersection(target_shape).area / target_shape.area
                     if pct_in > 0.001:
-                        contains_map[target.loc[j, target_key]].append((source_row_key, pct_in))
-#                    elif pct_in > 0.001:
-#                        contains_map[target.loc[j, target_key]].append((source_row_key, pct_in))
+                        contains_map[target_loc_key].append((source_row_key, pct_in))
+                    elif pct_in > 0:
+                        log.dprint("Very small in: source: ", source_row_key, ", target: ", target_loc_key)
+                        contains_map[target_loc_key].append((source_row_key, pct_in))
+                    else:
+                        contains_map[target_loc_key].append((source_row_key, -1))
                 except:
                     # do nothing
-                    log.dprint("Likely intersection error: source key: ", source_row_key, ", target key: ", target.loc[j, target_key])
+                    log.dprint("Likely intersection error: source key: ", source_row_key, ", target key: ", target_loc_key)
                     try:
                         if source_row_shape.contains(target_shape):
                             log.dprint("Contains")
-                            contains_map[target.loc[j, target_key]].append((source_row_key, 1.0))
+                            contains_map[target_loc_key].append((source_row_key, 1.0))
                         elif source_row_shape.overlaps(target_shape):
                             log.dprint("Overlaps")
-                            contains_map[target.loc[j, target_key]].append((source_row_key, 0.5))
+                            contains_map[target_loc_key].append((source_row_key, 0.5))
+                        else:
+                            contains_map[target_loc_key].append((source_row_key, -1))
                     except:
                         log.dprint("Contains or Overlaps operation also failed")
 
@@ -91,35 +97,38 @@ def make_target_source_map(larger_path, smaller_path, larger_key, smaller_key, u
     larger_shapes = gpd.read_file(larger_path)
     smaller_shapes = gpd.read_file(smaller_path)
 
-    if "init" in larger_shapes.crs and "init" in smaller_shapes.crs: 
-        print("Larger CRS: ", larger_shapes.crs["init"])
-        log.dprint("Larger CRS: ", larger_shapes.crs["init"])
-        print("Smaller CRS: ", smaller_shapes.crs["init"])
-        log.dprint("Smaller CRS: ", smaller_shapes.crs["init"])
-        if larger_shapes.crs["init"] != smaller_shapes.crs["init"]:
-            print("Converting Larger CRS to Smaller")
-            larger_shapes = larger_shapes.to_crs(smaller_shapes.crs)
+    if larger_shapes.crs and smaller_shapes.crs: 
+        print("Larger CRS: ", larger_shapes.crs)
+        log.dprint("Larger CRS: ", larger_shapes.crs)
+        print("Smaller CRS: ", smaller_shapes.crs)
+        log.dprint("Smaller CRS: ", smaller_shapes.crs)
+        print("Converting Larger CRS to Smaller")
+        larger_shapes = larger_shapes.to_crs(smaller_shapes.crs)
     else:
-        if not ("init" in larger_shapes.crs):
+        if not (larger_shapes.crs):
             print("Larger CRS unknown")
             log.dprint("Larger CRS unknown")
-        if not ("init" in smaller_shapes.crs):
+        if not (smaller_shapes.crs):
             print("Smaller CRS unknown")
             log.dprint("Smaller CRS unknown")
-
-
     res_tuple = make_target_source_allmap(larger_shapes, smaller_shapes, larger_key, smaller_key, use_index_for_larger_key)
 
     print("Build target ==> source map")
     final_map = {}      # {res.key: <largest of res.value>}
     split_count = 0
+    total_blocks = 0
+    not_contained_blocks = 0
+    based_on_bb_blocks = 0    
     for key, value in res_tuple[0].items():
+        total_blocks += 1
         if len(value) > 1:
             split_count += 1
-            best_item = ('dummy', 0.0)
+            best_item = ('dummy', -2)
             for item in value:
                 if item[1] > best_item[1]:
                     best_item = item
+            if best_item[1] == -1:
+                based_on_bb_blocks += 1
             final_map[key] = best_item[0]
         elif len(value) == 0:
             if source_is_block_group:
@@ -131,13 +140,20 @@ def make_target_source_map(larger_path, smaller_path, larger_key, smaller_key, u
                 else:
                     log.dprint("Block not contained in anything: ", key)
                     final_map[key] = ''  # smaller not found in larger
+                    not_contained_blocks += 1
             else:
                 log.dprint("Block not contained in anything: ", key)
                 final_map[key] = ''  # smaller not found in larger
+                not_contained_blocks += 1
 
         else:
+            if value[0][1] == -1:
+                based_on_bb_blocks += 1
             final_map[key] = value[0][0]
 
+    log.dprint("Total blocks: ", total_blocks)
+    log.dprint("Blocks not contained in anything: ", not_contained_blocks)
+    log.dprint("Blocks contained based on BB: ", based_on_bb_blocks)
     log.dprint("Split blocks: ", split_count, "\n")
 
     #pp = log.pretty_printer()
