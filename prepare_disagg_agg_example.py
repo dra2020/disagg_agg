@@ -86,7 +86,7 @@ def get_paths(state, isElections=True, year=2016, isCVAP=False):
     }
 
 
-def get_keys(state, isElections=True):
+def get_keys(state, isElections, year):
     block_key = "GEOID10"
     dest_key = "GEOID10"
     source_key = None

@@ -124,7 +124,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
     """
 
     stateCode = statecodes.make_state_codes()[state]      #  2-digit state census code
-    source_key, dest_key, block_key, use_index_for_source_key = prepare.get_keys(state, not isDemographicData)
+    source_key, dest_key, block_key, use_index_for_source_key = prepare.get_keys(state, not isDemographicData, year)
 
     paths = prepare.get_paths(state, not isDemographicData, year, isCVAP)
     source_geo_path = paths["source_geo_path"]
