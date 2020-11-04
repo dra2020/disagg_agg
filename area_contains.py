@@ -55,27 +55,28 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
                 count_in_possible_matches += 1
                 target_shape = target.loc[j, 'geometry']
                 target_loc_key = target.loc[j, target_key]
+                source_prec = None #source_prec = source.loc[source_row_key, 'PRECINCT']  # For matching precinct debugging
                 try:
                     pct_in = source_row_shape.intersection(target_shape).area / target_shape.area
                     if pct_in > 0.001:
-                        contains_map[target_loc_key].append((source_row_key, pct_in))
+                        contains_map[target_loc_key].append((source_row_key, pct_in, source_prec))
                     elif pct_in > 0:
                         log.dprint("Very small in: source: ", source_row_key, ", target: ", target_loc_key)
-                        contains_map[target_loc_key].append((source_row_key, pct_in))
+                        contains_map[target_loc_key].append((source_row_key, pct_in, source_prec))
                     else:
-                        contains_map[target_loc_key].append((source_row_key, -1))
+                        contains_map[target_loc_key].append((source_row_key, -1, source_prec))
                 except:
                     # do nothing
                     log.dprint("Likely intersection error: source key: ", source_row_key, ", target key: ", target_loc_key)
                     try:
                         if source_row_shape.contains(target_shape):
                             log.dprint("Contains")
-                            contains_map[target_loc_key].append((source_row_key, 1.0))
+                            contains_map[target_loc_key].append((source_row_key, 1.0, source_prec))
                         elif source_row_shape.overlaps(target_shape):
                             log.dprint("Overlaps")
-                            contains_map[target_loc_key].append((source_row_key, 0.5))
+                            contains_map[target_loc_key].append((source_row_key, 0.5, source_prec))
                         else:
-                            contains_map[target_loc_key].append((source_row_key, -1))
+                            contains_map[target_loc_key].append((source_row_key, -1, source_prec))
                     except:
                         log.dprint("Contains or Overlaps operation also failed")
 
@@ -129,7 +130,7 @@ def make_target_source_map(larger_path, smaller_path, larger_key, smaller_key, u
                     best_item = item
             if best_item[1] == -1:
                 based_on_bb_blocks += 1
-            final_map[key] = best_item[0]
+            final_map[key] = best_item[0]     # use [2] for precinct debugging
         elif len(value) == 0:
             if source_is_block_group:
                 # block not found in anything; for larger geo = block_group, assign block to block_group by id
@@ -149,7 +150,7 @@ def make_target_source_map(larger_path, smaller_path, larger_key, smaller_key, u
         else:
             if value[0][1] == -1:
                 based_on_bb_blocks += 1
-            final_map[key] = value[0][0]
+            final_map[key] = value[0][0]      # use [2] for precinct debugging
 
     log.dprint("Total blocks: ", total_blocks)
     log.dprint("Blocks not contained in anything: ", not_contained_blocks)
