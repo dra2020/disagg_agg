@@ -68,6 +68,19 @@ def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_pa
         json.dump(final_blk_map, outf, ensure_ascii=False)
 
 
+def disaggregate_data_ca(state, stateCode, large_data_path, block2geo_path, block_key, block_data_from_geo_path):
+    """
+    Invokes disaggregate: takes larger (precinct) data, block population map, smaller-larger mapping, and produces smaller (block) data (JSON)
+    """
+    log.dprint('Making block_data_from_geo:\n\t(', large_data_path, ',', block2geo_path, ') ==>\n\t\t', block_data_from_geo_path)
+
+    final_blk_map = disagg.make_block_props_map_ca(log, large_data_path, block2geo_path)
+
+    log.dprint('Writing block_data_from_geo\n')
+    with open(block_data_from_geo_path, 'w') as outf:
+        json.dump(final_blk_map, outf, ensure_ascii=False)
+
+
 def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, large_geo_key, dest_data_path):
     """
     Invokes aggregate: takes smaller (block) data, smaller-larger mapping, and produces larger (precinct) data (GEOJSON)
@@ -171,7 +184,9 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
         elif (step == 3):
             log.dprint("*******************************************")
             log.dprint("************* 3: Disaggregate *************")
-            if (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
+            if (state == "CA" and year == 2018 and source_data_path != None and block2source_map_path != None and not isDemographicData):
+                disaggregate_data_ca(state, stateCode, source_data_path, block2source_map_path, block_key, block_data_from_source_path)
+            elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
                 disaggregate_data(state, stateCode, source_data_path, source_key, block2source_map_path, block_key, block_pop_path, block_data_from_source_path, use_index_for_source_key, isDemographicData)
             else:
                 log.dprint("Required input missing:")

@@ -83,4 +83,51 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
     if not bool(failed_props_set):
         log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
-            
+
+
+def keep_key(key):
+    return key[0:3] == "ATG" or key[0:3] == "GOV" or key[0:3] == "USS" or key[0:3] == "LTG" or key[0:3] == "PRS"
+
+def make_block_props_map_ca(log, source_props_path, block_map_path):
+    """
+        source_props is CSV [COUNTY, SRPREC, props...]
+        block_map is CSV [COUNTY, ..., BLOCK_KEY, SRPREC, ]
+        source_key is (COUNTY, SRPREC)
+
+        Algorithm:
+          for each row in block_map
+            get row(COUNTY, SRPREC) from source_props
+            for each interesting prop
+              allocate PCTSRPREC % of value to BLOCK_KEY (note that blocks may be split across precincts)
+    """
+    source_props_map = {}
+    with open(source_props_path) as source_csv_file:
+        source_rows = csv.DictReader(source_csv_file, delimiter=",")
+        for row in tqdm(source_rows):
+            source_props_map[(row["COUNTY"], row["SRPREC"])] = row
+
+    log.dprint("Build block to fields map (disaggregate)")
+    print("Build block to fields map (disaggregate)")
+    final_blk_map = {}              # {blkid: {prop1: val1, prop2: val2, ...}, ...}
+    with open(block_map_path) as block_csv_file:
+        block_map = csv.DictReader(block_csv_file, delimiter=",")
+        for row in tqdm(block_map):
+            county = row["COUNTY"]
+            block = row["BLOCK_KEY"]
+            srprec = row["SRPREC"]
+            if srprec != "":        # skip first nan row
+                pctsrprec = float(row["PCTSRPREC"]) / 100
+
+                if not (block in final_blk_map):
+                    final_blk_map[block] = {}
+                if (county, srprec) in source_props_map:
+                    row = source_props_map[(county, srprec)]
+                    for key, value in row.items():
+                        if keep_key(key):
+                            blkval = float(value) * pctsrprec
+                            if not (key in final_blk_map[block]):
+                                final_blk_map[block][key] = blkval
+                            else:
+                                final_blk_map[block][key] += blkval
+
+    return final_blk_map
