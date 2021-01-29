@@ -10,6 +10,42 @@ import csv
 from tqdm import tqdm
 import numbers
 
+def getf(ds, f, blk_pct):
+    return 0 if not (f in ds) else(round(float(ds[f]) * blk_pct, 3))
+    
+def handle_datasets(blk, blk_pct, datasets):
+    # {"D10F": {"Asn": 2, ...}, "D10T": {"Asn": 3, ....}}
+    if "D10F" in datasets:
+        d10f = datasets["D10F"]
+        blk["TOT"] = getf(d10f, "Tot", blk_pct)
+        blk["WH"] = getf(d10f, "Wh", blk_pct)
+        blk["BL"] = getf(d10f, "Bl", blk_pct)
+        blk["ASN"] = getf(d10f, "Asn", blk_pct)
+        blk["NAT"] = getf(d10f, "Nat", blk_pct)
+        blk["PAC"] = getf(d10f, "PI", blk_pct)
+        blk["OTH"] = getf(d10f, "OthAl", blk_pct)
+        blk["MIX"] = getf(d10f, "Mix", blk_pct)
+        blk["HIS"] = getf(d10f, "His", blk_pct)
+        blk["BLC"] = getf(d10f, "BlC", blk_pct)
+        blk["ASNC"] = getf(d10f, "AsnC", blk_pct)
+        blk["PACC"] = getf(d10f, "PacC", blk_pct)
+        blk["NATC"] = getf(d10f, "NatC", blk_pct)
+    if "D10T" in datasets:
+        d10t = datasets["D10T"]
+        blk["TOT18"] = getf(d10t, "Tot", blk_pct)
+        blk["WH18"] = getf(d10t, "Wh", blk_pct)
+        blk["BL18"] = getf(d10t, "Bl", blk_pct)
+        blk["ASN18"] = getf(d10t, "Asn", blk_pct)
+        blk["NAT18"] = getf(d10t, "Nat", blk_pct)
+        blk["PAC18"] = getf(d10t, "PI", blk_pct)
+        blk["OTH18"] = getf(d10t, "OthAl", blk_pct)
+        blk["MIX18"] = getf(d10t, "Mix", blk_pct)
+        blk["HIS18"] = getf(d10t, "His", blk_pct)
+        blk["BLC18"] = getf(d10t, "BlC", blk_pct)
+        blk["ASNC18"] = getf(d10t, "AsnC", blk_pct)
+        blk["PACC18"] = getf(d10t, "PacC", blk_pct)
+        blk["NATC18"] = getf(d10t, "NatC", blk_pct)
+
 
 def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
     """
@@ -71,7 +107,9 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
             one_blk = {}
             source_props_item = source_props.loc[src_value[0]]
             for prop_key, prop_value in source_props_item.items():
-                if ok_to_agg(prop_key):   # isinstance(prop_value, numbers.Number)
+                if prop_key == "datasets":
+                    handle_datasets(one_blk, blk_pct, prop_value)
+                elif ok_to_agg(prop_key):   # isinstance(prop_value, numbers.Number)
                     try:
                         # add float/int props only
                         one_blk[prop_key] = round(float(prop_value) * blk_pct, 3)

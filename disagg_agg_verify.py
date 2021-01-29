@@ -14,6 +14,35 @@ import numbers
 
 from . import agg_logging as log
 
+def fmap(f, ds):
+    if f == "Tot":
+        return "TOT" if ds == "D10F" else "TOT18"
+    if f == "Wh":
+        return "WH" if ds == "D10F" else "WH18"
+    if f == "Bl":
+        return "BL" if ds == "D10F" else "BL18"
+    if f == "Asn":
+        return "ASN" if ds == "D10F" else "ASN18"
+    if f == "Nat":
+        return "NAT" if ds == "D10F" else "NAT18"
+    if f == "PI":
+        return "PAC" if ds == "D10F" else "PAC18"
+    if f == "OthAl":
+        return "OTH" if ds == "D10F" else "OTH18"
+    if f == "Mix":
+        return "MIX" if ds == "D10F" else "MIX18"
+    if f == "His":
+        return "HIS" if ds == "D10F" else "HIS18"
+    if f == "BlC":
+        return "BLC" if ds == "D10F" else "BLC18"
+    if f == "AsnC":
+        return "ASNC" if ds == "D10F" else "ASNC18"
+    if f == "PacC":
+        return "PACC" if ds == "D10F" else "PACC18"
+    if f == "NatC":
+        return "NATC" if ds == "D10F" else "NATC18"
+
+
 def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, ok_to_agg, block_data_path=None):
     """
         Function totals each numeric field across source data rows, does the same across aggregated data rows,
@@ -35,7 +64,25 @@ def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, ok_
         for key in source_keys:
             try:
                 value = source_data.loc[i, key]
-                if ok_to_agg(key):
+                if key == "datasets":
+                    if "D10F" in value:
+                        d10f = value["D10F"]
+                        for f, v in d10f.items():
+                            fm = fmap(f, "D10F")
+                            if fm in source_props_total:
+                                source_props_total[fm] += float(v)
+                            else:
+                                source_props_total[fm] = float(v)
+                    if "D10T" in value:
+                        d10t = value["D10T"]
+                        for f, v in d10t.items():
+                            fm = fmap(f, "D10T")
+                            if fm in source_props_total:
+                                source_props_total[fm] += float(v)
+                            else:
+                                source_props_total[fm] = float(v)
+
+                elif ok_to_agg(key):
                     num = float(value)
                     if key in source_props_total:
                         source_props_total[key] += num
