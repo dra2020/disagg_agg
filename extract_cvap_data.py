@@ -72,8 +72,8 @@ def add_fields(rec_map, bgid, row_in_bg, value_str):
     elif row_in_bg == 13:
         rec_map[bgid]["HIS"] = value
 
-def output_state(in_path, state, stateCode, year, rec_map):
-    outfile_path = in_path + state + "/" + year + "/" + year + "CVAP_bg_" + stateCode + ".json"
+def output_state(in_path, state, stateCode, yearstr, rec_map):
+    outfile_path = in_path + state + "/" + yearstr + "/" + yearstr + "CVAP_bg_" + stateCode + ".json"
 
     print("Output: ", outfile_path)
     print("Build geojson")
@@ -88,12 +88,14 @@ def output_state(in_path, state, stateCode, year, rec_map):
 def extract():
 
     skip_until = 0
-    year = "2018"
-    in_path = "../Documents/Redist/Census/"
+    year = 2019
+    yearstr = str(year)
+    census_path = "../Documents/Redist/Census/"
+    in_path = "../Documents/Redist/" + yearstr + "ACS/CVAP_" + str(year-4) + "-" + yearstr + "_ACS_csv_files/"
     in_file_path = in_path + "BlockGr.csv"
     state_code_lookup = statecodes.make_state_digit_to_code()
 
-    print("Processing " + year + " CVAP data")
+    print("Processing " + yearstr + " CVAP data")
     print("Input:", in_file_path)
 
     rec_map = {}  # {"geoid": {"WH": number, "BL": number, ...}}
@@ -116,7 +118,7 @@ def extract():
                     # output state
                     state = state_code_lookup[current_state_code]
                     print("Output state:", state, "(" + current_state_code + "); BG count:", state_bg_count)
-                    output_state(in_path, state, current_state_code, year, rec_map)
+                    output_state(census_path, state, current_state_code, yearstr, rec_map)
                 current_state_code = state_code
                 rec_map = {}  # reset
                 state_bg_count = 0
