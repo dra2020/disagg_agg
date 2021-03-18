@@ -33,7 +33,8 @@ def ok_to_agg(prop):
             prop.lower() != 'objectid' and prop.lower()[0:4] != 'area' and prop.lower() != 'pct' and prop.lower() != 'district' and
             prop.lower()[0:4] != 'fips' and prop.lower()[0:3] != 'cty' and prop.lower()[0:4] != 'ward' and prop.lower()[0:5] != 'geoid' and
             prop.lower() != 'blkgrp' and prop.lower()[0:6] != 'logrec' and prop.lower() != 'state' and prop.lower() != 'sumlevel' and
-            prop.lower() != 'tract' and prop.lower()[0:7] != 'correct' and prop.lower() != 'vtd_name')
+            prop.lower() != 'tract' and prop.lower()[0:7] != 'correct' and prop.lower() != 'vtd_name' and prop.lower() != 'vtdst' and
+            prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18')
 
 
 def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_path, block_key, block2geo_path, use_index_for_large_key=False, sourceIsBlkGrp=False):
