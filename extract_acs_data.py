@@ -32,7 +32,7 @@ import zipfile
 
 import statecodes
 
-def add_seq5_fields(rec_map, logrecno, row):
+def add_regular_fields(rec_map, logrecno, row):
     total = row[37]    # B03002_001
     white = row[39]    # B03002_003
     black = row[40]    # B03002_004
@@ -54,7 +54,7 @@ def add_seq5_fields(rec_map, logrecno, row):
     rec_map[logrecno]["HIS"] = hisp
 
 
-def add_seq4_fields(rec_map, logrecno, row):    
+def add_combo_fields(rec_map, logrecno, row):    
     black_incl_combo = row[17]    # B02009_001
     native_incl_combo = row[18]   # B02010_001
     asian_incl_combo = row[19]    # B02011_001
@@ -76,8 +76,6 @@ def add_seq9_fields(rec_map, logrecno, row):
     hisp18 = row[36] + row[47]    # B05003I_008 + B05003I_019
     rec_map[logrecno]["WH18"] = white18
     rec_map[logrecno]["HIS18"] = hisp18
-
-
 
 
 def extract(state):
@@ -109,24 +107,26 @@ def extract(state):
         print(zip_path, " already unzipped: ", input_dir)
 
     infile_geo_path = input_dir + geo_prefix + state.lower() + ".csv"
-    infile_seq4_path = input_dir + data_prefix + state.lower() + "0004000.txt"
-    infile_seq5_path = input_dir + data_prefix + state.lower() + "0005000.txt"
-    infile_seq8_path = input_dir + data_prefix + state.lower() + "0008000.txt"
-    infile_seq9_path = input_dir + data_prefix + state.lower() + "0009000.txt"
+
+    # 2018 combo is seq4 and regular is seq5; for 2019 combo is seq3 and regular is seq4
+    infile_combo_path = input_dir + data_prefix + state.lower() + ("0003000.txt" if year == "2019" else "0004000.txt")
+    infile_reg_path = input_dir + data_prefix + state.lower() + ("0004000.txt" if year == "2019" else "0005000.txt")
+    #infile_seq8_path = input_dir + data_prefix + state.lower() + "0008000.txt"
+    #infile_seq9_path = input_dir + data_prefix + state.lower() + "0009000.txt"
 
     outfile_path = in_root + state + "/" + year + "/" + year + "ACS_bg_" + stateCode + ".json"
 
     print("Processing " + year + " ACS data for " + stateCode)
     print("Input geo: ", infile_geo_path)
-    print("Input seq4: ", infile_seq4_path)
-    print("Input seq5: ", infile_seq5_path)
-    print("Input seq8: ", infile_seq8_path)
-    print("Input seq9: ", infile_seq9_path)
+    print("Input combo: ", infile_combo_path)
+    print("Input regular: ", infile_reg_path)
+    #print("Input seq8: ", infile_seq8_path)
+    #print("Input seq9: ", infile_seq9_path)
     print("Output: ", outfile_path)
 
     rec_map = {}
     csv_row_count = 0
-    with open(infile_geo_path) as geo_file:
+    with open(infile_geo_path, encoding='latin-1') as geo_file:   # latin-1 because of the ñ char in some names
         geo_data = csv.reader(geo_file, delimiter=",")
         for row in geo_data:
             if row[2] == "150":     #SUMLEVEL = 150 means Block Group
@@ -137,18 +137,18 @@ def extract(state):
             #print(csv_row_count)
 
     # Pull only rows with LOGRECNO's (column 5) in the map
-    with open(infile_seq4_path) as seq4_file:
-        seq4_data = csv.reader(seq4_file, delimiter=",")
-        for row in seq4_data:
+    with open(infile_combo_path) as combo_file:
+        combo_data = csv.reader(combo_file, delimiter=",")
+        for row in combo_data:
             if row[5] in rec_map:
-                add_seq4_fields(rec_map, row[5], row)
+                add_combo_fields(rec_map, row[5], row)
 
     # Pull only rows with LOGRECNO's (column 5) in the map
-    with open(infile_seq5_path) as seq5_file:
-        seq5_data = csv.reader(seq5_file, delimiter=",")
-        for row in seq5_data:
+    with open(infile_reg_path) as reg_file:
+        reg_data = csv.reader(reg_file, delimiter=",")
+        for row in reg_data:
             if row[5] in rec_map:
-                add_seq5_fields(rec_map, row[5], row)
+                add_regular_fields(rec_map, row[5], row)
 
     """
     NOT AVALIABLE AT BLOCKGROUP LEVEL
@@ -183,8 +183,8 @@ def extract(state):
 
 #for state in ["CT","IA","ID","IN","KY","LA","ME","MS","MT","NY","OH","OK","OR","PA","SD","UT","WA","WV","WY"]:  
 #for state in ["DE","FL","GA","HI","IL","KS","MA","MD","MI","MN","MO","NH","RI","SC","TN","VT","WI"]:         
-#for state in ["AL","ND","NE","NJ","NV"]:
-#for state in ["AZ","CO","TX","NM","CA"]:   # these fail because of the funky ñ
-#for state in ["AK","AR"]:
-for state in ["OK"]:
+#for state in ["ND","NE","NJ","NV"]:
+#for state in ["AZ","CO","TX","NM","CA"]:
+#for state in ["AK","AR","AL","DC"]:
+for state in ["VA"]:
     extract(state)
