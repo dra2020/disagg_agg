@@ -37,7 +37,7 @@ def ok_to_agg(prop):
             prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18')
 
 
-def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_path, block_key, block2geo_path, use_index_for_large_key=False, sourceIsBlkGrp=False):
+def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_path, block_key, block2geo_path, year, isDemographicData, use_index_for_large_key=False, sourceIsBlkGrp=False):
     """
     Invokes area_contains: takes larger (precinct) geometry, smaller (block) geometry, and produces smaller ==> larger mapping (JSON)
     """
@@ -46,7 +46,7 @@ def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_pa
         return
 
     log.dprint('Making block map:\n\t(', large_geo_path, ',', block_geo_path, ') ==>\n\t\t', block2geo_path) 
-    block_map = ac.make_target_source_map(large_geo_path, block_geo_path, large_geo_key, block_key, use_index_for_large_key, sourceIsBlkGrp)
+    block_map = ac.make_target_source_map(large_geo_path, block_geo_path, large_geo_key, block_key, use_index_for_large_key, state, year, isDemographicData, sourceIsBlkGrp)
 
     log.dprint('Writing block map\n')
     with open(block2geo_path, 'w') as outf:
@@ -165,7 +165,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             log.dprint("*******************************************")
             log.dprint("****** 1: Make map between geometries *****")
             if (source_geo_path != None and block_geo_path != None and block2source_map_path != None):
-                make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, use_index_for_source_key, sourceIsBlkGrp)
+                make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tSource geo: ", source_geo_path)
@@ -176,7 +176,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             log.dprint("*******************************************")
             log.dprint("****** 2: Make map between geometries *****")
             if (dest_geo_path != None and block_geo_path != None and block2dest_map_path != None):
-                make_block_map(state, stateCode, dest_geo_path, dest_key, block_geo_path, block_key, block2dest_map_path)
+                make_block_map(state, stateCode, dest_geo_path, dest_key, block_geo_path, block_key, block2dest_map_path, year, isDemographicData)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tDest geo: ", dest_geo_path)
