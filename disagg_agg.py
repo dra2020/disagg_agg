@@ -33,15 +33,15 @@ def ok_to_agg(prop):
             prop.lower() != 'objectid' and prop.lower()[0:4] != 'area' and prop.lower() != 'pct' and prop.lower() != 'district' and
             prop.lower()[0:4] != 'fips' and prop.lower()[0:3] != 'cty' and prop.lower()[0:4] != 'ward' and prop.lower()[0:5] != 'geoid' and
             prop.lower() != 'blkgrp' and prop.lower()[0:6] != 'logrec' and prop.lower() != 'state' and prop.lower() != 'sumlevel' and
-            prop.lower() != 'tract' and prop.lower()[0:7] != 'correct' and prop.lower() != 'vtd_name' and prop.lower() != 'vtdst' and
-            prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18')
+            prop.lower() != 'tract' and prop.lower()[0:7] != 'correct' and prop.lower() != 'vtd_name' and prop.lower()[0:5] != 'vtdst' and
+            prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18' and prop.lower() != 'geometry')
 
 
 def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_path, block_key, block2geo_path, year, isDemographicData, use_index_for_large_key=False, sourceIsBlkGrp=False):
     """
     Invokes area_contains: takes larger (precinct) geometry, smaller (block) geometry, and produces smaller ==> larger mapping (JSON)
     """
-    if os.path.exists(block2geo_path):
+    if os.path.exists(block2geo_path) and os.path.getmtime(block2geo_path) > os.path.getmtime(large_geo_path):
         log.dprint("Block map already exists: ", block2geo_path)
         return
 
@@ -155,7 +155,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
     agg_data_from_source_path = paths["agg_data_from_source_path"]
     working_path = paths["working_path"]
 
-    logfile_name = "output" + "_".join(str(step) for step in steps) + "_" + str(year) + "to" + str(destyear) + ("" if isDemographicData else "_elec") + ".log"
+    logfile_name = "output" + "_".join(str(step) for step in steps) + "_" + str(year) + "to" + str(destyear) + ("" if isDemographicData else "_elec") + ("_cvap" if isCVAP else "") + ".log"
     print("Setting logging output to ", working_path + logfile_name)
     log.set_output(working_path + logfile_name, "Disagg/Agg Logging")
  
@@ -186,7 +186,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
         elif (step == 3):
             log.dprint("*******************************************")
             log.dprint("************* 3: Disaggregate *************")
-            if (state == "CA" and year == 2018 and source_data_path != None and block2source_map_path != None and not isDemographicData):
+            if (state == "CA" and destyear == 2020 and source_data_path != None and block2source_map_path != None and not isDemographicData):
                 disaggregate_data_ca(state, stateCode, source_data_path, block2source_map_path, block_key, block_data_from_source_path)
             elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
                 if state == "KY" and source_key == "VTD":

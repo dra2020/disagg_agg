@@ -57,6 +57,8 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
     print("Making map: Intersect source and target geometries")
     count_in_possible_matches = 0
     source_keys_in_set = set({})
+    count_intersect_plus_failures = 0   # count if intersection throws exception and contains or overlaps throws, too
+    count_intersect_failures = 0
     for i in tqdm(source.index):
         source_row_shape = source.loc[i, 'geometry']
         source_row_key = i if use_index_for_source_key else str(source.loc[i, source_key])
@@ -86,25 +88,27 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
                     if pct_in > 0.001:
                         contains_map[target_loc_key].append((source_row_key, pct_in, source_prec))
                     elif pct_in > 0:
-                        log.dprint("Very small in: source: ", source_row_key, ", target: ", target_loc_key)
+                        #log.dprint("Very small in: source: ", source_row_key, ", target: ", target_loc_key)
                         contains_map[target_loc_key].append((source_row_key, pct_in, source_prec))
                     else:
                         contains_map[target_loc_key].append((source_row_key, -1, source_prec))
                 except:
                     # do nothing
-                    log.dprint("Likely intersection error: source key: ", source_row_key, ", target key: ", target_loc_key)
+                    #log.dprint("Likely intersection error: source key: ", source_row_key, ", target key: ", target_loc_key)
+                    count_intersect_failures += 1
                     try:
                         source_keys_in_set.add(source_row_key)
                         if source_row_shape.contains(target_shape):
-                            log.dprint("Contains")
+                            #log.dprint("Contains")
                             contains_map[target_loc_key].append((source_row_key, 1.0, source_prec))
                         elif source_row_shape.overlaps(target_shape):
-                            log.dprint("Overlaps")
+                            #log.dprint("Overlaps")
                             contains_map[target_loc_key].append((source_row_key, 0.5, source_prec))
                         else:
                             contains_map[target_loc_key].append((source_row_key, -1, source_prec))
                     except:
-                        log.dprint("Contains or Overlaps operation also failed")
+                        log.dprint("Contains or Overlaps failed after Intersection failed")
+                        count_intersect_plus_failures += 1
 
     source_keys_not_in_map = set({})
     for targkey, value in contains_map.items():
@@ -114,10 +118,10 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
                 log.dprint("No blocks maps to source: ", srckey)
                 source_keys_not_in_map.add(srckey)
     log.dprint("Source keys not in map: ", len(source_keys_not_in_map))
-    print("Begin Second Pass")
 
-    source_keys_assigned_pass_2 = 0
     if state == "FL" and (not isDemographicData):
+        print("Begin Second Pass")
+        source_keys_assigned_pass_2 = 0
         countykey = 'County' if year == 2018 else 'county'    # A pain that fl_2016 and fl_2018 are different
         for i in tqdm(target.index):
             target_loc_key = target.loc[i, target_key]
@@ -132,8 +136,10 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
                 print ("SourceRowKey: " + str(source_row_key))
                 contains_map[target_loc_key].append((int(source_row_key), 0.5, None))
                 source_keys_assigned_pass_2 += 1
+        log.dprint("Phase 2 sources assigned: ", source_keys_assigned_pass_2)
 
-    log.dprint("Phase 2 sources assigned: ", source_keys_assigned_pass_2)
+    log.dprint("Intersect threw except count: ", count_intersect_failures)
+    log.dprint("Intersect and Contains/Overlaps both threw except count: ", count_intersect_plus_failures)
     log.dprint("Possible match count: ", count_in_possible_matches, "\n")
     return contains_map, source_key_set
 

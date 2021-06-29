@@ -7,11 +7,12 @@
 import geopandas as gpd
 import json
 import csv
+import math
 from tqdm import tqdm
-import numbers
+from fractions import Fraction
 
 def getf(ds, f, blk_pct):
-    return 0 if not (f in ds) else(round(float(ds[f]) * blk_pct, 3))
+    return 0 if not (f in ds) else (round(float(ds[f]) * blk_pct, 3))
     
 def handle_datasets(blk, blk_pct, datasets):
     # {"D10F": {"Asn": 2, ...}, "D10T": {"Asn": 3, ....}}
@@ -47,7 +48,7 @@ def handle_datasets(blk, blk_pct, datasets):
         blk["NATC18"] = getf(d10t, "NatC", blk_pct)
 
 
-def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
+def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
     """
         source_props is geojson or shapefile
         block_map {blkid: source_key, ...}
@@ -122,13 +123,74 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
         log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
 
+def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
+    """
+        source_props is geojson or shapefile
+        block_map {blkid: source_key, ...}
+        source_key is key field for source_props; value used to lookup in block_map; we always treat it as a string
+        block_pop_map is either
+            {blkid: population, ...} or
+        use_index_for_source_key: True ==> Use geopandas index as key
+    """
+    with open(block_map_path) as json_file:
+        block_map = json.load(json_file)
+
+        source_props = gpd.read_file(source_props_path)
+
+        # Build source props map {srckey1: {prop1: val1, ...}, ...}
+        source_props_map = {}
+        for i in source_props.index:
+            source_props_item = source_props.loc[i]
+            srckey = i if use_index_for_source_key else str(source_props_item[source_key])
+            source_props_map[srckey] = {}
+            for prop_key, prop_value in source_props_item.items():
+                if prop_key != srckey:
+                    source_props_map[srckey][prop_key] = prop_value
+
+        # Build map {prec1: {blk1: pct1, ...}, ...}
+        # Then build map {prec1: {blk1: {key1: val1, ...}, ...}, ...} with largest_remainder for all keys on all precincts, so all values are integers
+        prec_blk_pct_map = {}
+        for block, prec in tqdm(block_map.items()):
+            if prec != "":
+                if not (prec in prec_blk_pct_map):
+                    prec_blk_pct_map[prec] = {}
+                if not (block in prec_blk_pct_map[prec]):
+                    prec_blk_pct_map[prec][block] = 0
+        for prec, blks in prec_blk_pct_map.items():
+            sum_blks_pop = 0
+            for block in blks.keys():
+                if block in block_pop_map:
+                    sum_blks_pop += block_pop_map[block]
+                else:
+                    log.dprint("Block not in block_pop_map: ", block)
+            if sum_blks_pop > 0:
+                for block in blks.keys():
+                    if block in block_pop_map:
+                          blks[block] = block_pop_map[block] / sum_blks_pop
+            else:
+                for block in blks.keys():
+                    blks[block] = 1     # All blocks have zero pop, but pick one in case prec has data
+                    break
+
+        prec_blk_key_map = make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg)
+        return make_final_blk_map(log, prec_blk_key_map)
+
+
+"""
+We use California state database's SRPREC csv data file for the data.
+These files use a non-FIPS count code, so we need to translate to build a proper SRPREC_KEY
+"""
+
+def srprec_key(county, srprec):
+    countyfp = str(int(county) * 2 - 1).zfill(3)
+    return "06" + countyfp + str(srprec)
 
 def keep_key(key):
     return key[0:3] == "ATG" or key[0:3] == "GOV" or key[0:3] == "USS" or key[0:3] == "LTG" or key[0:3] == "PRS"
 
 def make_block_props_map_ca(log, source_props_path, block_map_path):
     """
-        source_props is CSV [COUNTY, SRPREC, props...]
+        source_props is CSV [COUNTY, SRPREC, props...]   or may have SRPREC_KEY instead of COUNTY
         block_map is CSV [COUNTY, ..., BLOCK_KEY, SRPREC, ]
         source_key is (COUNTY, SRPREC)
 
@@ -139,33 +201,112 @@ def make_block_props_map_ca(log, source_props_path, block_map_path):
               allocate PCTSRPREC % of value to BLOCK_KEY (note that blocks may be split across precincts)
     """
     source_props_map = {}
-    with open(source_props_path) as source_csv_file:
+    with open(source_props_path) as source_csv_file, open(block_map_path) as block_csv_file:
         source_rows = csv.DictReader(source_csv_file, delimiter=",")
         for row in tqdm(source_rows):
-            source_props_map[(row["COUNTY"], row["SRPREC"])] = row
+            srprec = ""
+            if "SRPREC_KEY" in row:
+                srprec = row["SRPREC_KEY"]
+            elif "COUNTY" in row:
+                if row["COUNTY"] == "CNTYTOT":
+                    continue
+                srprec = srprec_key(row["COUNTY"], row["SRPREC"])
+            source_props_map[srprec] = row
 
+        # Build map {prec1: {blk1: pct1, ...}, ...}
+        # Then build map {prec1: {blk1: {key1: val1, ...}, ...}, ...} with largest_remainder for all keys on all precincts, so all values are integers
+        # A block may appear in more than 1 prec list
+        block_map = csv.DictReader(block_csv_file, delimiter=",")
+
+        prec_blk_pct_map = {}
+        for row in tqdm(block_map):
+            block = row["BLOCK_KEY"]
+            srprec = row["SRPREC_KEY"]
+            if srprec != "":        # skip first nan row
+                pctsrprec = float(row["PCTSRPREC"]) / 100
+                if not (srprec in prec_blk_pct_map):
+                    prec_blk_pct_map[srprec] = {}
+                if not (block in prec_blk_pct_map[srprec]):
+                    prec_blk_pct_map[srprec][block] = 0
+                prec_blk_pct_map[srprec][block] += pctsrprec
+        # verify_pcts()
+        prec_blk_key_map = make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, keep_key)
+        return make_final_blk_map(log, prec_blk_key_map)
+
+def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
+    prec_blk_key_map = {}
+    cant_disagg_set = {}
+    for srprec, blk_pcts in prec_blk_pct_map.items():
+        if srprec in source_props_map:
+            prec_blk_key_map[srprec] = {}
+            for blk in blk_pcts.keys():
+                prec_blk_key_map[srprec][blk] = {}
+            row = source_props_map[srprec]
+            for key, value in row.items():
+                if key == "datasets":
+                    distribute_dataset_values(prec_blk_key_map[srprec], blk_pcts, value)
+                elif ok_to_agg(key):
+                    try:
+                        distribute_value(prec_blk_key_map[srprec], blk_pcts, key, int(value))
+                    except:
+                        if not (key in cant_disagg_set):
+                            print("Can't disagg key: ", key)
+                            cant_disagg_set[key] = True
+
+        else:
+            log.dprint("Prec Key not found: ", srprec)
+    return prec_blk_key_map
+
+def getf(ds, f):
+    return 0 if not (f in ds) else (ds[f])
+
+def distribute_dataset_values(blk_key_map, blk_pcts, datasets):
+    if "D10F" in datasets:
+        ds = datasets["D10F"]
+        distribute_value(blk_key_map, blk_pcts, "TOT", getf(ds, "Tot"))
+        distribute_value(blk_key_map, blk_pcts, "WH", getf(ds, "Wh"))
+        distribute_value(blk_key_map, blk_pcts, "HIS", getf(ds, "His"))
+        distribute_value(blk_key_map, blk_pcts, "BLC", getf(ds, "BlC"))
+        distribute_value(blk_key_map, blk_pcts, "ASNC", getf(ds, "AsnC"))
+        distribute_value(blk_key_map, blk_pcts, "PACC", getf(ds, "PacC"))
+        distribute_value(blk_key_map, blk_pcts, "NATC", getf(ds, "NatC"))
+    if "D10T" in datasets:
+        ds = datasets["D10T"]
+        distribute_value(blk_key_map, blk_pcts, "TOT18", getf(ds, "Tot"))
+        distribute_value(blk_key_map, blk_pcts, "WH18", getf(ds, "Wh"))
+        distribute_value(blk_key_map, blk_pcts, "HIS18", getf(ds, "His"))
+        distribute_value(blk_key_map, blk_pcts, "BLC18", getf(ds, "BlC"))
+        distribute_value(blk_key_map, blk_pcts, "ASNC18", getf(ds, "AsnC"))
+        distribute_value(blk_key_map, blk_pcts, "PACC18", getf(ds, "PacC"))
+        distribute_value(blk_key_map, blk_pcts, "NATC18", getf(ds, "NatC"))
+
+def distribute_value(blk_key_map, blk_pcts, key, value):
+    # Hare quota (Hamilton)
+
+    blks_info = []    # [(blk, whole, rem), ...]
+    sum_wholes = 0
+    for blk, pct in blk_pcts.items():
+        whole = math.floor(value * pct)
+        sum_wholes += whole
+        blks_info.append((blk, whole, (value * pct) - whole))
+    blks_info = sorted(blks_info, key=lambda info: info[2], reverse=True)
+    for i in range(0, value - sum_wholes):
+        blks_info[i] = (blks_info[i][0], blks_info[i][1] + 1, blks_info[i][2])
+
+    for tuple in blks_info:
+        blk_key_map[tuple[0]][key] = tuple[1]   
+
+def make_final_blk_map(log, prec_blk_key_map):
     log.dprint("Build block to fields map (disaggregate)")
     print("Build block to fields map (disaggregate)")
     final_blk_map = {}              # {blkid: {prop1: val1, prop2: val2, ...}, ...}
-    with open(block_map_path) as block_csv_file:
-        block_map = csv.DictReader(block_csv_file, delimiter=",")
-        for row in tqdm(block_map):
-            county = row["COUNTY"]
-            block = row["BLOCK_KEY"]
-            srprec = row["SRPREC"]
-            if srprec != "":        # skip first nan row
-                pctsrprec = float(row["PCTSRPREC"]) / 100
-
-                if not (block in final_blk_map):
-                    final_blk_map[block] = {}
-                if (county, srprec) in source_props_map:
-                    row = source_props_map[(county, srprec)]
-                    for key, value in row.items():
-                        if keep_key(key):
-                            blkval = float(value) * pctsrprec
-                            if not (key in final_blk_map[block]):
-                                final_blk_map[block][key] = blkval
-                            else:
-                                final_blk_map[block][key] += blkval
-
+    for srprec, blks in prec_blk_key_map.items():
+        for block, key_map in blks.items():
+            if not (block in final_blk_map):
+                final_blk_map[block] = {}
+            for key, value in key_map.items():
+                if not (key in final_blk_map[block]):
+                    final_blk_map[block][key] = value
+                else:
+                    final_blk_map[block][key] += value
     return final_blk_map

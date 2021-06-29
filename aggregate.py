@@ -29,19 +29,22 @@ def make_aggregated_props(block_props_path, dest_block_map_path, dest_key, ok_to
     props_total = {}
     props_count = {}
     for key, value in tqdm(block_props.items()):
+      if not (key in dest_block_map):
+        tot = value["TOT"] if "TOT" in value else 0
+        log.dprint("blk not in map: " + key + ", Tot: " + str(tot))
+      else:
         vtd = dest_block_map[key]
         if not (vtd in result_props):
             result_props[vtd] = {dest_key: vtd}
         for prop, prop_value in value.items():
             if prop != dest_key and ok_to_agg(prop):
                 try:
-                    float_value = float(prop_value)
-                    if math.isnan(float_value):
-                        float_value = 0
+                    if math.isnan(prop_value):
+                        prop_value = 0
                     if prop in props_total:
-                        props_total[prop] += float_value
+                        props_total[prop] += prop_value
                     else:
-                        props_total[prop] = float_value
+                        props_total[prop] = prop_value
 
                     if prop in props_count:
                         props_count[prop] += 1
@@ -49,9 +52,9 @@ def make_aggregated_props(block_props_path, dest_block_map_path, dest_key, ok_to
                         props_count[prop] = 1
 
                     if prop in result_props[vtd]:
-                        result_props[vtd][prop] += float_value
+                        result_props[vtd][prop] += prop_value
                     else:
-                        result_props[vtd][prop] = float_value
+                        result_props[vtd][prop] = prop_value
                 except:
                   log.dprint("Non number prop: ", prop)
 
