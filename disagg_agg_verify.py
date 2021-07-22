@@ -100,7 +100,8 @@ def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, ok_
                 value = agg_data.loc[i, key]
                 num = float(value)
                 if math.isnan(num):
-                    log.dprint("NaN: ", key)
+                    #log.dprint("NaN: ", key)
+                    noop = 0
                 else:
                     if key in agg_props_total:
                         agg_props_total[key] += num
@@ -132,7 +133,8 @@ def verify_source_vs_aggregated(source_data_path, agg_data_from_source_path, ok_
                 try:
                     num = float(value)
                     if math.isnan(num):
-                        log.dprint("NaN: ", key)
+                        #log.dprint("NaN: ", key)
+                        noop = 0
                     else:
                         if field in block_props_total:
                             block_props_total[field] += num

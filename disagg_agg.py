@@ -34,6 +34,7 @@ def ok_to_agg(prop):
             prop.lower()[0:4] != 'fips' and prop.lower()[0:3] != 'cty' and prop.lower()[0:4] != 'ward' and prop.lower()[0:5] != 'geoid' and
             prop.lower() != 'blkgrp' and prop.lower()[0:6] != 'logrec' and prop.lower() != 'state' and prop.lower() != 'sumlevel' and
             prop.lower() != 'tract' and prop.lower()[0:7] != 'correct' and prop.lower() != 'vtd_name' and prop.lower()[0:5] != 'vtdst' and
+            prop.lower() != 'prec_id' and prop.lower() != 'enr_desc' and
             prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18' and prop.lower() != 'geometry')
 
 
@@ -83,12 +84,12 @@ def disaggregate_data_ca(state, stateCode, large_data_path, block2geo_path, bloc
         json.dump(final_blk_map, outf, ensure_ascii=False)
 
 
-def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, large_geo_key, dest_data_path):
+def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, large_geo_key, dest_data_path, srcIsGeojson=False):
     """
     Invokes aggregate: takes smaller (block) data, smaller-larger mapping, and produces larger (precinct) data (GEOJSON)
     """
     log.dprint ('Making dest_data:\n\t(', block_data_path, ',', block2geo_path, ') ==>\n\t\t', dest_data_path)
-    aggregated_props = agg.make_aggregated_props(block_data_path, block2geo_path, large_geo_key, ok_to_agg)
+    aggregated_props = agg.make_aggregated_props(block_data_path, block2geo_path, large_geo_key, ok_to_agg, srcIsGeojson)
     log.dprint('Writing dest data\n')
     with open(dest_data_path, 'w') as outf:
         json.dump(aggregated_props, outf, ensure_ascii=False)
@@ -203,7 +204,8 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             log.dprint("*******************************************")
             log.dprint("*************** 4: Aggregate **************")
             if (block_data_from_source_path != None and block2dest_map_path != None and agg_data_from_source_path != None):
-                aggregate_source2dest(state, stateCode, block_data_from_source_path, block2dest_map_path, dest_key, agg_data_from_source_path)
+                is2020Census = (year == 2020 and destyear == 2020 and isDemographicData)
+                aggregate_source2dest(state, stateCode, block_data_from_source_path, block2dest_map_path, dest_key, agg_data_from_source_path, is2020Census)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tBlock data: ", block_data_from_source_path)
