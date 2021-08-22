@@ -119,7 +119,7 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
                 source_keys_not_in_map.add(srckey)
     log.dprint("Source keys not in map: ", len(source_keys_not_in_map))
 
-    if state == "FL" and (not isDemographicData):
+    if False: #  state == "FL" and (not isDemographicData):
         print("Begin Second Pass")
         source_keys_assigned_pass_2 = 0
         countykey = 'County' if year == 2018 else 'county'    # A pain that fl_2016 and fl_2018 are different
@@ -128,12 +128,12 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
             countyfp = target_loc_key[2:5]
             filteredsource = source[source[countykey] == cntyid(countyfp)]
             if len(contains_map[target_loc_key]) == 0:
-                log.dprint("Pass 2 block has no target: ", target_loc_key)
-                print("Pass 2 block has no target: " + target_loc_key)
+                #log.dprint("Pass 2 block has no target: ", target_loc_key)
+                #print("Pass 2 block has no target: " + target_loc_key)
                 target_shape = target.loc[i, 'geometry']
                 closest = filteredsource.distance(target_shape).sort_values().index[0]
                 source_row_key = closest if use_index_for_source_key else str(source.loc[closest, source_key])
-                print ("SourceRowKey: " + str(source_row_key))
+                #print ("SourceRowKey: " + str(source_row_key))
                 contains_map[target_loc_key].append((int(source_row_key), 0.5, None))
                 source_keys_assigned_pass_2 += 1
         log.dprint("Phase 2 sources assigned: ", source_keys_assigned_pass_2)

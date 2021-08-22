@@ -299,6 +299,7 @@ def distribute_value(blk_key_map, blk_pcts, key, value):
 def make_final_blk_map(log, prec_blk_key_map):
     log.dprint("Build block to fields map (disaggregate)")
     print("Build block to fields map (disaggregate)")
+    props_total = {}
     final_blk_map = {}              # {blkid: {prop1: val1, prop2: val2, ...}, ...}
     for srprec, blks in prec_blk_key_map.items():
         for block, key_map in blks.items():
@@ -309,4 +310,14 @@ def make_final_blk_map(log, prec_blk_key_map):
                     final_blk_map[block][key] = value
                 else:
                     final_blk_map[block][key] += value
+
+                if key in props_total:
+                    props_total[key] += value
+                else:
+                    props_total[key] = value
+
+    pp = log.pretty_printer()
+    log.dprint("Props totals")
+    pp.pprint(props_total)        
+
     return final_blk_map
