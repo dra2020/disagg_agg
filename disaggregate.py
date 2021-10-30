@@ -126,7 +126,7 @@ def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_m
 def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
     """
         source_props is geojson or shapefile
-        block_map {blkid: source_key, ...}
+        block_map {blkid: [source_key, ...], ...}
         source_key is key field for source_props; value used to lookup in block_map; we always treat it as a string
         block_pop_map is either
             {blkid: population, ...} or
@@ -150,12 +150,13 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
         # Build map {prec1: {blk1: pct1, ...}, ...}
         # Then build map {prec1: {blk1: {key1: val1, ...}, ...}, ...} with largest_remainder for all keys on all precincts, so all values are integers
         prec_blk_pct_map = {}
-        for block, prec in tqdm(block_map.items()):
-            if prec != "":
-                if not (prec in prec_blk_pct_map):
-                    prec_blk_pct_map[prec] = {}
-                if not (block in prec_blk_pct_map[prec]):
-                    prec_blk_pct_map[prec][block] = 0
+        for block, preclist in tqdm(block_map.items()):
+            for prec in preclist:
+                if prec != "":
+                    if not (prec in prec_blk_pct_map):
+                        prec_blk_pct_map[prec] = {}
+                    if not (block in prec_blk_pct_map[prec]):
+                        prec_blk_pct_map[prec][block] = 0
         for prec, blks in prec_blk_pct_map.items():
             sum_blks_pop = 0
             for block in blks.keys():

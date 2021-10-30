@@ -175,7 +175,9 @@ def make_target_source_map(larger_path, smaller_path, larger_key, smaller_key, u
     res_tuple = make_target_source_allmap(larger_shapes, smaller_shapes, larger_key, smaller_key, use_index_for_larger_key, state, year, isDemographicData)
 
     print("Build target ==> source map")
-    final_map = {}      # {res.key: <largest of res.value>}
+    final_map = {}      # {res.key: [<largest of res.value>]}
+    extras_map = {}     # {srckey: set(blkkey)}
+    source_keys_in_map = set({})  # source keys that get placed normally
     split_count = 0
     total_blocks = 0
     not_contained_blocks = 0
@@ -190,34 +192,57 @@ def make_target_source_map(larger_path, smaller_path, larger_key, smaller_key, u
                     best_item = item
             if best_item[1] == -1:
                 based_on_bb_blocks += 1
-            final_map[key] = best_item[0]     # use [2] for precinct debugging
+            final_map[key] = [best_item[0]]     # use [2] for precinct debugging
+            source_keys_in_map.add(best_item[0])
+
+            # Track srckeys that didn't get picked
+            for item in value:
+                if item[0] != best_item[0]:
+                    if not (key in extras_map):
+                        extras_map[item[0]] = []
+                    extras_map[item[0]].append(key)
+
         elif len(value) == 0:
             if source_is_block_group:
                 # block not found in anything; for larger geo = block_group, assign block to block_group by id
                 bg_key = key[0:12]
                 if bg_key in res_tuple[1]:
                     log.dprint("Block not contained in anything; using BG key: ", key)
-                    final_map[key] = bg_key
+                    final_map[key] = [bg_key]
+                    source_keys_in_map.add(bg_key)
                 else:
                     log.dprint("Block not contained in anything: ", key)
-                    final_map[key] = ''  # smaller not found in larger
+                    final_map[key] = ['']  # smaller not found in larger
                     not_contained_blocks += 1
             else:
                 log.dprint("Block not contained in anything: ", key)
-                final_map[key] = ''  # smaller not found in larger
+                final_map[key] = ['']  # smaller not found in larger
                 not_contained_blocks += 1
 
         else:
             if value[0][1] == -1:
                 based_on_bb_blocks += 1
-            final_map[key] = value[0][0]      # use [2] for precinct debugging
+            final_map[key] = [value[0][0]]      # use [2] for precinct debugging
+            source_keys_in_map.add(value[0][0])
 
+    # Make sure all srckeys get mapped from some block
+    for srckey, blkkeys in extras_map.items():
+        if not (srckey in source_keys_in_map):
+            if len(blkkeys) > 1:
+                log.dprint("Pass 2 srckey: ", srckey, " has ", len(blkkeys), " blkkeys")
+            final_map[blkkeys[0]].append(srckey)
+  
     source_key_set = res_tuple[1]
     source_keys_in_map = set({})
-    for targkey, srckey in final_map.items():
-        source_keys_in_map.add(srckey)
+    for targkey, srckeys in final_map.items():
+        for srckey in srckeys:
+            source_keys_in_map.add(srckey)
     log.dprint("Source keys not in map: ", len(source_key_set) - len(source_keys_in_map))
     print("Source keys not in map: " + str(len(source_key_set) - len(source_keys_in_map)))
+
+    for srckey in source_key_set:
+        if not (srckey in source_keys_in_map):
+            log.dprint("Source not in map: ", srckey, "CliVotes: ", larger_shapes.loc[srckey]["G16PREDCLI"])
 
     log.dprint("Total blocks: ", total_blocks)
     log.dprint("Blocks not contained in anything: ", not_contained_blocks)
