@@ -187,7 +187,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
         elif (step == 3):
             log.dprint("*******************************************")
             log.dprint("************* 3: Disaggregate *************")
-            if (state == "CA" and destyear == 2020 and source_data_path != None and block2source_map_path != None and not isDemographicData):
+            if (state == "CA" and destyear == 2020 and year == 2018 and source_data_path != None and block2source_map_path != None and not isDemographicData):
                 disaggregate_data_ca(state, stateCode, source_data_path, block2source_map_path, block_key, block_data_from_source_path)
             elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
                 if state == "KY" and source_key == "VTD":
