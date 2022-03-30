@@ -77,6 +77,18 @@ def add_seq9_fields(rec_map, logrecno, row):
     rec_map[logrecno]["WH18"] = white18
     rec_map[logrecno]["HIS18"] = hisp18
 
+def add_other_data_fields(rec_map, logrecno, row):
+
+    # Problem is you can't aggregate Median Income and Median Education without knowing the distribution within the bands
+    # We could aggregate the Mean Income
+    
+    # B19001 - Total #households
+    # B19013 - Median Household Income (12 months)  (Seq 58)
+
+    # B15003_001 - Total #individuals 25 and over
+    # B15003_002 to _025 - bands from none to doctorate (in script add values from lowest until we hit 50% of individuals)
+
+    income = 0
 
 def extract(state):
     """
@@ -87,15 +99,18 @@ def extract(state):
     FILEID	FILETYPE	STUSAB	CHARITER	SEQUENCE	LOGRECNO
     """
 
-    year = "2019"
-    in_root = "../Documents/Redist/Census/"
     stateCode = statecodes.make_state_codes()[state]
     stateName = statecodes.make_state_names_nospace()[state]
-
     stateDir = stateName + "_Tracts_Block_Groups_Only"
+
+    in_root = "../Documents/Redist/"
+    year = "2020"
+    if year == "2020":
+        input_dir = in_root + "2020ACS/" + stateDir
+    else:
+        input_dir = in_root + "Census/" + state + "/" + year + "/ACS/" + stateDir
     geo_prefix = "/g" + year + "5"
     data_prefix = "/e" + year + "5"
-    input_dir = in_root + state + "/" + year + "/ACS/" + stateDir
 
     zip_path = input_dir + ".zip"
     if not os.path.exists(input_dir):
@@ -108,13 +123,13 @@ def extract(state):
 
     infile_geo_path = input_dir + geo_prefix + state.lower() + ".csv"
 
-    # 2018 combo is seq4 and regular is seq5; for 2019 combo is seq3 and regular is seq4
-    infile_combo_path = input_dir + data_prefix + state.lower() + ("0003000.txt" if year == "2019" else "0004000.txt")
-    infile_reg_path = input_dir + data_prefix + state.lower() + ("0004000.txt" if year == "2019" else "0005000.txt")
+    # 2018 combo is seq4 and regular is seq5; for 2019/2020 combo is seq3 and regular is seq4
+    infile_combo_path = input_dir + data_prefix + state.lower() + ("0003000.txt" if (year == "2019" or year == "2020") else "0004000.txt")
+    infile_reg_path = input_dir + data_prefix + state.lower() + ("0004000.txt" if (year == "2019" or year == "2020") else "0005000.txt")
     #infile_seq8_path = input_dir + data_prefix + state.lower() + "0008000.txt"
     #infile_seq9_path = input_dir + data_prefix + state.lower() + "0009000.txt"
 
-    outfile_path = in_root + state + "/" + year + "/" + year + "ACS_bg_" + stateCode + ".json"
+    outfile_path = in_root + "Census/" + state + "/" + year + "/" + year + "ACS_bg_" + stateCode + ".json"
 
     print("Processing " + year + " ACS data for " + stateCode)
     print("Input geo: ", infile_geo_path)
@@ -181,10 +196,14 @@ def extract(state):
 
 # Main
 
-#for state in ["CT","IA","ID","IN","KY","LA","ME","MS","MT","NY","OH","OK","OR","PA","SD","UT","WA","WV","WY"]:  
-#for state in ["DE","FL","GA","HI","IL","KS","MA","MD","MI","MN","MO","NH","RI","SC","TN","VT","WI"]:         
-#for state in ["ND","NE","NJ","NV"]:
-#for state in ["AZ","CO","TX","NM","CA"]:
-#for state in ["AK","AR","AL","DC"]:
-for state in ["VA"]:
+all_states = []
+#all_states = all_states + ["AK","AL","AR","AZ"]
+#all_states = all_states + ["CA","CO","CT"]   
+#all_states = all_states + ["DE","FL","GA","HI","DC"]
+#all_states = all_states + ["IA","ID","IN","IL","KS","KY","LA"]
+all_states = all_states + ["MA","MD","ME","MS","MI","MN","MO","MT"]
+all_states = all_states + ["NC","ND","NE","NH","NJ","NM","NY","NV"]
+all_states = all_states + ["OH","OK","OR","PA","RI","SC","SD","TN","TX"]
+all_states = all_states + ["UT","VA","VT","WA","WV","WY","WI"]
+for state in all_states:
     extract(state)

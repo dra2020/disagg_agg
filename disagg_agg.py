@@ -53,6 +53,15 @@ def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_pa
     with open(block2geo_path, 'w') as outf:
         json.dump(block_map, outf, ensure_ascii=False)
 
+def makeTrivialBlock2BG(state, block_pop_path, block2source_map_path):
+    final_map = {}
+    with open(block_pop_path) as block_pop_json:
+        block_pop_map = json.load(block_pop_json)
+        for block in block_pop_map.keys():
+            final_map[block] = [block[0:12]]
+    with open(block2source_map_path, "w") as block2bg_file:
+        json.dump(final_map, block2bg_file, ensure_ascii=False)
+
 
 def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False):
     """
@@ -95,7 +104,7 @@ def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, lar
         json.dump(aggregated_props, outf, ensure_ascii=False)
 
 
-def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, year=2016, isCVAP=False, destyear=2010): 
+def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, year=2016, isCVAP=False, destyear=2010, isACS=False): 
     """
     This function drives the steps in the disaggregation/aggregation process.
     Each step reads from its input files and writes to its output file, so steps can be taken one at a time if desired
@@ -142,7 +151,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
     stateCode = statecodes.make_state_codes()[state]      #  2-digit state census code
     source_key, dest_key, block_key, use_index_for_source_key = prepare.get_keys(state, not isDemographicData, year, destyear)
 
-    paths = prepare.get_paths(state, not isDemographicData, year, isCVAP, destyear)
+    paths = prepare.get_paths(state, not isDemographicData, year, isCVAP, destyear, isACS)
     source_geo_path = paths["source_geo_path"]
     source_data_path = paths["source_data_path"]
     block_geo_path = paths["block_geo_path"]
@@ -166,7 +175,10 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             log.dprint("*******************************************")
             log.dprint("****** 1: Make map between geometries *****")
             if (source_geo_path != None and block_geo_path != None and block2source_map_path != None):
-                make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
+                if sourceIsBlkGrp and year == destyear:
+                    makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
+                else:
+                    make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tSource geo: ", source_geo_path)

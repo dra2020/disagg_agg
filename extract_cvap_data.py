@@ -1,5 +1,5 @@
 """
-2018/2019 CVAP
+2018/2019/2020 CVAP
 
 Input:
     BlockGr.csv (for all states) with fields
@@ -72,8 +72,8 @@ def add_fields(rec_map, bgid, row_in_bg, value_str):
     elif row_in_bg == 13:
         rec_map[bgid]["HIS"] = value
 
-def output_state(in_path, state, stateCode, yearstr, rec_map):
-    outfile_path = in_path + state + "/" + yearstr + "/" + yearstr + "CVAP_bg_" + stateCode + ".json"
+def output_state(census_path, state, stateCode, yearstr, rec_map):
+    outfile_path = census_path + state + "/" + yearstr + "/" + yearstr + "CVAP_bg_" + stateCode + ".json"
 
     print("Output: ", outfile_path)
     print("Build geojson")
@@ -88,7 +88,7 @@ def output_state(in_path, state, stateCode, yearstr, rec_map):
 def extract():
 
     skip_until = 0
-    year = 2019
+    year = 2020
     yearstr = str(year)
     census_path = "../Documents/Redist/Census/"
     in_path = "../Documents/Redist/" + yearstr + "ACS/CVAP_" + str(year-4) + "-" + yearstr + "_ACS_csv_files/"
@@ -109,7 +109,7 @@ def extract():
         for row in tqdm(bgdata):
             if row[0] == "geoname":
                 continue  # Skip 1st row
-            bgid = row[2][7:]
+            bgid = row[2][9:]       # changed in 2020 CVAP
             state_code = bgid[0:2]
             if int(state_code) < skip_until:
                 continue
