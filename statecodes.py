@@ -52,7 +52,8 @@ def make_state_codes():
         "WA": "53", 
         "WV": "54", 
         "WI": "55", 
-        "WY": "56"} 
+        "WY": "56",
+        "PR": "72"} 
     return codes
 
 def make_state_names():
@@ -107,7 +108,8 @@ def make_state_names():
         "WA": "Washington", 
         "WV": "West Virginia", 
         "WI": "Wisconsin", 
-        "WY": "Wyoming"} 
+        "WY": "Wyoming",
+        "PR": "Puerto Rico"} 
     return names
 
 def make_state_names_nospace():
@@ -162,7 +164,8 @@ def make_state_names_nospace():
         "WA": "Washington", 
         "WV": "WestVirginia", 
         "WI": "Wisconsin", 
-        "WY": "Wyoming"} 
+        "WY": "Wyoming",
+        "PR": "PuertoRico"} 
     return names
 
 def make_state_digit_to_code():
@@ -217,5 +220,6 @@ def make_state_digit_to_code():
         "53": "WA", 
         "54": "WV", 
         "55": "WI", 
-        "56": "WY"} 
+        "56": "WY",
+        "72": "PR"} 
     return codes

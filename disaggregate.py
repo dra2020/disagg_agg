@@ -151,12 +151,21 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
         # Then build map {prec1: {blk1: {key1: val1, ...}, ...}, ...} with largest_remainder for all keys on all precincts, so all values are integers
         prec_blk_pct_map = {}
         for block, preclist in tqdm(block_map.items()):
-            for prec in preclist:
+            if isinstance(preclist, list):
+                for prec in preclist:
+                    if prec != "":
+                        if not (prec in prec_blk_pct_map):
+                            prec_blk_pct_map[prec] = {}
+                        if not (block in prec_blk_pct_map[prec]):
+                            prec_blk_pct_map[prec][block] = 0
+            else:
+                prec = preclist
                 if prec != "":
                     if not (prec in prec_blk_pct_map):
                         prec_blk_pct_map[prec] = {}
                     if not (block in prec_blk_pct_map[prec]):
                         prec_blk_pct_map[prec][block] = 0
+
         for prec, blks in prec_blk_pct_map.items():
             sum_blks_pop = 0
             for block in blks.keys():

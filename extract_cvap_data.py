@@ -87,7 +87,7 @@ def output_state(census_path, state, stateCode, yearstr, rec_map):
 
 def extract():
 
-    skip_until = 0
+    skip_until = 72
     year = 2020
     yearstr = str(year)
     census_path = "../Documents/Redist/Census/"
@@ -130,6 +130,13 @@ def extract():
                 state_bg_count += 1
             add_fields(rec_map, bgid, row_in_bg, row[6])
             row_in_bg += 1
+        
+        # Last state
+        if current_state_code != "":
+            # output state
+            state = state_code_lookup[current_state_code]
+            print("Output state:", state, "(" + current_state_code + "); BG count:", state_bg_count)
+            output_state(census_path, state, current_state_code, yearstr, rec_map)
 
 
 # Main
