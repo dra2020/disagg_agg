@@ -217,7 +217,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             log.dprint("*************** 4: Aggregate **************")
             if (block_data_from_source_path != None and block2dest_map_path != None and agg_data_from_source_path != None):
                 is2020Census = (year == 2020 and destyear == 2020 and isDemographicData)
-                aggregate_source2dest(state, stateCode, block_data_from_source_path, block2dest_map_path, dest_key, agg_data_from_source_path, is2020Census)
+                aggregate_source2dest(state, stateCode, block_data_from_source_path, block2dest_map_path, dest_key, agg_data_from_source_path, is2020Census or (year == 2010 and destyear == 2010))
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tBlock data: ", block_data_from_source_path)
