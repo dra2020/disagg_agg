@@ -47,6 +47,15 @@ def handle_datasets(blk, blk_pct, datasets):
         blk["PACC18"] = getf(d10t, "PacC", blk_pct)
         blk["NATC18"] = getf(d10t, "NatC", blk_pct)
 
+def sum_props(prop_totals_map, prop_key, prop_value):
+    try:
+        intval = int(prop_value)
+        if not (prop_key in prop_totals_map):
+            prop_totals_map[prop_key] = 0
+        prop_totals_map[prop_key] += intval
+    except:
+        ignore = 0
+    return
 
 def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
     """
@@ -136,6 +145,7 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
         block_map = json.load(json_file)
 
         source_props = gpd.read_file(source_props_path)
+        source_props_total = {}
 
         # Build source props map {srckey1: {prop1: val1, ...}, ...}
         source_props_map = {}
@@ -146,6 +156,12 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
             for prop_key, prop_value in source_props_item.items():
                 if prop_key != srckey:
                     source_props_map[srckey][prop_key] = prop_value
+                    sum_props(source_props_total, prop_key, prop_value)
+                    
+
+        pp = log.pretty_printer()
+        log.dprint("Source Props totals")
+        pp.pprint(source_props_total)        
 
         # Build map {prec1: {blk1: pct1, ...}, ...}
         # Then build map {prec1: {blk1: {key1: val1, ...}, ...}, ...} with largest_remainder for all keys on all precincts, so all values are integers
@@ -246,8 +262,16 @@ def make_block_props_map_ca(log, source_props_path, block_map_path):
 def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
     prec_blk_key_map = {}
     cant_disagg_set = {}
+
+    all_precs = set({})
+    for srprec in source_props_map.keys():
+        all_precs.add(srprec)
+
+    props_total = {}
+    seen_precs = set({})
     for srprec, blk_pcts in prec_blk_pct_map.items():
         if srprec in source_props_map:
+            seen_precs.add(srprec)
             prec_blk_key_map[srprec] = {}
             for blk in blk_pcts.keys():
                 prec_blk_key_map[srprec][blk] = {}
@@ -257,7 +281,8 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
                     distribute_dataset_values(prec_blk_key_map[srprec], blk_pcts, value)
                 elif ok_to_agg(key):
                     try:
-                        distribute_value(prec_blk_key_map[srprec], blk_pcts, key, int(value))
+                        distribute_value(prec_blk_key_map[srprec], blk_pcts, key, int(value), srprec)
+                        sum_props(props_total, key, value)
                     except:
                         if not (key in cant_disagg_set):
                             print("Can't disagg key: ", key)
@@ -265,6 +290,11 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
 
         else:
             log.dprint("Prec Key not found: ", srprec)
+
+    print("Left out precs", all_precs - seen_precs, sep=" ")
+    pp = log.pretty_printer()
+    log.dprint("Props totals from Distributing")
+    pp.pprint(props_total)        
     return prec_blk_key_map
 
 def getf(ds, f):
@@ -290,7 +320,7 @@ def distribute_dataset_values(blk_key_map, blk_pcts, datasets):
         distribute_value(blk_key_map, blk_pcts, "PACC18", getf(ds, "PacC"))
         distribute_value(blk_key_map, blk_pcts, "NATC18", getf(ds, "NatC"))
 
-def distribute_value(blk_key_map, blk_pcts, key, value):
+def distribute_value(blk_key_map, blk_pcts, key, value, prec=''):
     # Hare quota (Hamilton)
 
     blks_info = []    # [(blk, whole, rem), ...]
@@ -303,8 +333,12 @@ def distribute_value(blk_key_map, blk_pcts, key, value):
     for i in range(0, value - sum_wholes):
         blks_info[i] = (blks_info[i][0], blks_info[i][1] + 1, blks_info[i][2])
 
+    amount_distr = 0
     for tuple in blks_info:
-        blk_key_map[tuple[0]][key] = tuple[1]   
+        blk_key_map[tuple[0]][key] = tuple[1]
+        amount_distr += tuple[1]
+    if amount_distr < value:
+        print("Distribution lacking:", prec, key, (value - amount_distr), sep=" ")
 
 def make_final_blk_map(log, prec_blk_key_map):
     log.dprint("Build block to fields map (disaggregate)")
@@ -317,14 +351,9 @@ def make_final_blk_map(log, prec_blk_key_map):
                 final_blk_map[block] = {}
             for key, value in key_map.items():
                 if not (key in final_blk_map[block]):
-                    final_blk_map[block][key] = value
-                else:
-                    final_blk_map[block][key] += value
-
-                if key in props_total:
-                    props_total[key] += value
-                else:
-                    props_total[key] = value
+                    final_blk_map[block][key] = 0
+                final_blk_map[block][key] += value
+                sum_props(props_total, key, value)
 
     pp = log.pretty_printer()
     log.dprint("Props totals")

@@ -115,7 +115,7 @@ def make_target_source_allmap(source, target, source_key, target_key, use_index_
         for tuple in value:
             srckey = tuple[0]
             if not (srckey in source_keys_in_set):
-                log.dprint("No blocks maps to source: ", srckey)
+                log.dprint("No blocks map to source: ", srckey)
                 source_keys_not_in_map.add(srckey)
     log.dprint("Source keys not in map: ", len(source_keys_not_in_map))
 
@@ -242,7 +242,7 @@ def make_target_source_map(larger_path, smaller_path, larger_key, smaller_key, u
 
     for srckey in source_key_set:
         if not (srckey in source_keys_in_map):
-            log.dprint("Source not in map: ", srckey, "CliVotes: ", larger_shapes.loc[srckey]["G16PREDCLI"])
+            log.dprint("Source not in map: ", srckey) #, "CliVotes: ", larger_shapes.loc[srckey]["G16PREDCLI"])
 
     log.dprint("Total blocks: ", total_blocks)
     log.dprint("Blocks not contained in anything: ", not_contained_blocks)
