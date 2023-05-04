@@ -57,6 +57,58 @@ def sum_props(prop_totals_map, prop_key, prop_value):
         ignore = 0
     return
 
+# TODO This really needs state and year (5/3/23)
+def cong_party_wa(cand_code):
+    consufx = cand_code[4:9]
+    if (consufx == "01DEL" or consufx == "02LAR" or consufx == "03PER" or consufx == "04WHI" or consufx == "05HIL" or 
+        consufx == "06KIL" or consufx == "07JAY" or consufx == "08SCH" or consufx == "09SMI" or consufx == "10STR"):
+        return "DVAR"
+    if (consufx == "01CAV" or consufx == "02MAT" or consufx == "03KEN" or consufx == "04NEW" or consufx == "05ROD" or 
+        consufx == "06KRE" or consufx == "07MOO" or consufx == "08LAR" or consufx == "09BAS" or consufx == "10SWA"):
+        return "RVAR"
+    return "IOTH"
+
+def cong_party_nc(cand_code):
+    if cand_code[1:4] == "CON":     # Congress
+        party = cand_code[6:7]
+        return "DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH"
+    if cand_code[1:4] == "SSC":     # State Supreme Court
+        consufx = cand_code[4:9]
+        if (consufx == "03INM" or consufx == "05ERV"):
+            return "DVAR"
+        if (consufx == "03DIE" or consufx == "05ALL"):
+            return "RVAR"
+        return "IOTH"
+    return "UNK"
+
+def filter_prop_key(cand_code, state):
+    if state == "WA":
+        contest = None
+        suffix = cand_code[6:]
+        match cand_code[3:5]:
+            case "SE": 
+                contest = cand_code[0:3] + "SEN" + ("DMUR" if suffix.startswith("MUR") else "RSMI" if suffix.startswith("SMI") else "IOTH")
+            case "SO":
+                contest = cand_code[0:3] + "SOS" + ("DHOB" if suffix.startswith("HOB") else "IAND" if suffix.startswith("AND") else "ROTH")
+            case "C0":
+                contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
+            case "C1":
+                contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
+        return contest
+    elif state == "NC":
+        contest = None
+        suffix = cand_code[6:]
+        match cand_code[1:4]:
+            case "22U": 
+                contest = cand_code[0:3] + "SEN" + ("DBEA" if suffix.startswith("DBEA") else "RBUD" if suffix.startswith("RBUD") else "IOTH")
+            case "CON":
+                contest = "G22CON" + cong_party_nc(cand_code)
+            case "SSC":
+                contest = "G22SC" + ("3" if cand_code[4:6] == "03" else "5") + cong_party_nc(cand_code)
+        return contest
+
+    return cand_code
+
 def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
     """
         source_props is geojson or shapefile
@@ -132,7 +184,7 @@ def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_m
         log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
 
-def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg):
+def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state):
     """
         source_props is geojson or shapefile
         block_map {blkid: [source_key, ...], ...}
@@ -154,9 +206,14 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
             srckey = i if use_index_for_source_key else str(source_props_item[source_key])
             source_props_map[srckey] = {}
             for prop_key, prop_value in source_props_item.items():
-                if prop_key != srckey:
-                    source_props_map[srckey][prop_key] = prop_value
-                    sum_props(source_props_total, prop_key, prop_value)
+                if prop_key != srckey and ok_to_agg(prop_key, prop_value):
+                    # To handle more contests, call
+                    prop_key = filter_prop_key(prop_key, state)
+                    if prop_key != None:
+                        if not (prop_key in source_props_map[srckey]):
+                            source_props_map[srckey][prop_key] = 0
+                        source_props_map[srckey][prop_key] += int(prop_value)
+                        sum_props(source_props_total, prop_key, prop_value)
                     
 
         pp = log.pretty_printer()

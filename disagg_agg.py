@@ -25,17 +25,24 @@ from . import agg_logging as log
 #from . import prepare_disagg_agg_example as prepare
 from .temp import prepare_disagg_agg as prepare
 
-def ok_to_agg(prop):
+def ok_to_agg(prop, value=0):
     """
     Filter out props that we know we shouldn't aggregate
     """
-    return (prop.lower()[0:4] != 'name' and prop.lower()[0:6] != 'county' and prop.lower()[0:8] != 'precinct' and prop.lower() != 'id' and
+    if (prop.lower()[0:4] != 'name' and prop.lower()[0:6] != 'county' and prop.lower()[0:8] != 'precinct' and prop.lower() != 'id' and
             prop.lower() != 'objectid' and prop.lower()[0:4] != 'area' and prop.lower() != 'pct' and prop.lower() != 'district' and
             prop.lower()[0:4] != 'fips' and prop.lower()[0:3] != 'cty' and prop.lower()[0:4] != 'ward' and prop.lower()[0:5] != 'geoid' and
             prop.lower() != 'blkgrp' and prop.lower()[0:6] != 'logrec' and prop.lower() != 'state' and prop.lower() != 'sumlevel' and
             prop.lower() != 'tract' and prop.lower()[0:7] != 'correct' and prop.lower() != 'vtd_name' and prop.lower()[0:5] != 'vtdst' and
             prop.lower() != 'prec_id' and prop.lower() != 'enr_desc' and
-            prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18' and prop.lower() != 'geometry')
+            prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18' and prop.lower() != 'geometry'):
+        # Now make sure it's numeric
+        try:
+            intval = int(value)
+            return True
+        except:
+            return False
+    return False
 
 
 def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_path, block_key, block2geo_path, year, isDemographicData, use_index_for_large_key=False, sourceIsBlkGrp=False):
@@ -73,7 +80,7 @@ def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_pa
         block_pop_map = json.load(block_pop_json)
 
     # Option here to supply different disaggregation algorithm for isDemographicData == True
-    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg)
+    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg, state)
 
     log.dprint('Writing block_data_from_geo\n')
     with open(block_data_from_geo_path, 'w') as outf:
