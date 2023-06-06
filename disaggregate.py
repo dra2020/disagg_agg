@@ -83,6 +83,7 @@ def cong_party_nc(cand_code):
 
 def filter_prop_key(cand_code, state):
     if state == "WA":
+        """                 # Already done in extracting the data
         contest = None
         suffix = cand_code[6:]
         match cand_code[3:5]:
@@ -94,7 +95,8 @@ def filter_prop_key(cand_code, state):
                 contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
             case "C1":
                 contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
-        return contest
+        """
+        return cand_code
     elif state == "NC":
         contest = None
         suffix = cand_code[6:]
