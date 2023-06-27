@@ -108,6 +108,29 @@ def filter_prop_key(cand_code, state):
             case "SSC":
                 contest = "G22SC" + ("3" if cand_code[4:6] == "03" else "5") + cong_party_nc(cand_code)
         return contest
+    elif state == "WI":
+        contest = None
+        party = cand_code[3:6]
+        match cand_code[0:3]:
+            case "GOV":
+                if party != "TOT":
+                    contest = "G22" + "GOV" + ("DVAR" if party == "DEM" else "RVAR" if party == "REP" else "IOTH")
+            case "SOS":
+                if party != "TOT":
+                    contest = "G22" + "SOS" + ("DVAR" if party == "DEM" else "RVAR" if party == "REP" else "IOTH")
+            case "TRS":
+                if party != "TOT":
+                    contest = "G22" + "TRE" + ("DVAR" if party == "DEM" else "RVAR" if party == "REP" else "IOTH")
+            case "USH":
+                if party != "TOT":
+                    contest = "G22" + "CON" + ("DVAR" if party == "DEM" else "RVAR" if party == "REP" else "IOTH")
+            case "USS":
+                if party != "TOT":
+                    contest = "G22" + "SEN" + ("DVAR" if party == "DEM" else "RVAR" if party == "REP" else "IOTH")
+            case "WAG":
+                if party != "TOT":
+                    contest = "G22" + "ATG" + ("DVAR" if party == "DEM" else "RVAR" if party == "REP" else "IOTH")
+        return contest
 
     return cand_code
 
