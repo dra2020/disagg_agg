@@ -131,6 +131,43 @@ def filter_prop_key(cand_code, state):
                 if party != "TOT":
                     contest = "G22" + "ATG" + ("DVAR" if party == "DEM" else "RVAR" if party == "REP" else "IOTH")
         return contest
+    elif state == "MN":
+        contest = None
+        match cand_code[0:2]:
+            case "MN":
+                match cand_code[2:4]:
+                    case "GO":
+                        if cand_code[5] != "T":
+                            contest = "G22" + "GOV" + ("DVAR" if cand_code[5] == "D" else "RVAR" if cand_code[5] == "R" else "IOTH")
+                    case "SO":
+                        if cand_code[5] != "T":
+                            contest = "G22" + "SOS" + ("DVAR" if cand_code[5] == "D" else "RVAR" if cand_code[5] == "R" else "IOTH")
+                    case "AU":
+                        if cand_code[5] != "T":
+                            contest = "G22" + "AUD" + ("DVAR" if cand_code[5] == "D" else "RVAR" if cand_code[5] == "R" else "IOTH")
+                    case "AG":
+                        if cand_code[4] != "T":
+                            contest = "G22" + "ATG" + ("DVAR" if cand_code[4] == "D" else "RVAR" if cand_code[4] == "R" else "IOTH")
+            case "US":
+                if cand_code[2:5] == "REP" and cand_code[5] != "T":
+                    contest = "G22" + "CON" + ("DVAR" if cand_code[5] == "D" else "RVAR" if cand_code[5] == "R" else "IOTH")
+        return contest
+    elif state == "TX":
+        contest = None
+        party = cand_code[6:7]
+        match cand_code[0:6]:
+            case "G22GOV":
+                contest = "G22" + "GOV" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22LTG":
+                contest = "G22" + "LTG" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22COM":
+                contest = "G22" + "TRE" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22ATG":
+                contest = "G22" + "ATG" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case other:
+                if cand_code[0:4] == "GCON":
+                    contest = "G22" + "CON" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+        return contest
 
     return cand_code
 
