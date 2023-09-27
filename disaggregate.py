@@ -201,6 +201,63 @@ def filter_prop_key(cand_code, state):
                 if cand_code[0:4] == "GCON":
                     contest = "G22" + "CON" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
         return contest
+    elif state == "OH":
+        contest = None
+        party = cand_code[6:7]
+        match cand_code[0:6]:
+            case "G22GOV":
+                contest = "G22" + "GOV" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22USS":
+                contest = "G22" + "USS" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22SOS":
+                contest = "G22" + "SOS" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22TRE":
+                contest = "G22" + "TRE" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22ATG":
+                contest = "G22" + "ATG" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22AUD":
+                contest = "G22" + "AUD" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22JUS":
+                if cand_code[7:10] == "FIS" or cand_code[7:10] == "JAM":
+                    contest = "G22" + "SC1" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+                else:
+                    contest = "G22" + "SC2" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22CJU":
+                contest = "G22" + "SCC" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case other:
+                if cand_code[0:4] == "GCON":
+                    contest = "G22" + "CON" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+        return contest
+    elif state == "AL":
+        contest = None
+        party = cand_code[6:7]
+        match cand_code[0:6]:
+            case "G22GOV":
+                contest = "G22" + "GOV" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22USS":
+                contest = "G22" + "USS" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22SOS":
+                contest = "G22" + "SOS" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22LTG":
+                contest = "G22" + "LTG" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22ATG":
+                contest = "G22" + "ATG" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22AUD":
+                contest = "G22" + "AUD" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22AJ5":
+                contest = "G22" + "SC5" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case "G22AJ6":
+                contest = "G22" + "SC6" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+            case other:
+                if cand_code[0:4] == "GCON":
+                    contest = "G22" + "CON" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+        return contest
+    elif state == "MT":
+        contest = None
+        party = cand_code[5:6]
+        if cand_code[0:4] == "GCON":
+            contest = "G22" + "CON" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
+        return contest
 
     return cand_code
 
