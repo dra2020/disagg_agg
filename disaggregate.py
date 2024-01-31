@@ -57,6 +57,11 @@ def sum_props(prop_totals_map, prop_key, prop_value):
         ignore = 0
     return
 
+"""
+    The following set of functions exists to filter the fields in 2022 election datasets.
+    The data we have obtained often has all of the state legislative races, which are numerous and we are not using,
+    so it simply slows this process considerably, for no good reason 
+"""
 # TODO This really needs state and year (5/3/23)
 def cong_party_wa(cand_code):
     consufx = cand_code[4:9]
@@ -590,7 +595,7 @@ def make_final_blk_map(log, prec_blk_key_map):
             for key, value in key_map.items():
                 if not (key in final_blk_map[block]):
                     final_blk_map[block][key] = 0
-                final_blk_map[block][key] += value
+                final_blk_map[block][key] += value      # accumulate in case a block receives values from > 1 precinct
                 sum_props(props_total, key, value)
 
     pp = log.pretty_printer()
