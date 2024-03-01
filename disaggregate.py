@@ -292,6 +292,24 @@ def filter_prop_key(cand_code, state):
                 if cand_code[0:4] == "GCON":
                     contest = "G22" + "CON" + ("DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH")
         return contest
+    elif state == "NY":
+        contest = None
+        if len(cand_code) > 3 and cand_code[0:4] == "Gov_":
+            party = cand_code[4:]
+            contest = "G22" + "GOV" + ("DVAR" if (party == "DEM" or party == "WOR") else "RVAR" if (party == "REP" or party == "CON") else "IOTH")
+        elif len(cand_code) > 5 and cand_code[0:6] == "USSen_":
+            party = cand_code[6:]
+            contest = "G22" + "USS" + ("DVAR" if (party == "DEM" or party == "WOR") else "RVAR" if (party == "REP" or party == "CON") else "IOTH")
+        elif len(cand_code) > 4 and cand_code[0:5] == "Comp_":
+            party = cand_code[5:]
+            contest = "G22" + "CMP" + ("DVAR" if (party == "DEM" or party == "WOR") else "RVAR" if (party == "REP" or party == "CON") else "IOTH")
+        elif len(cand_code) > 2 and cand_code[0:3] == "AG_":
+            party = cand_code[3:]
+            contest = "G22" + "ATG" + ("DVAR" if (party == "DEM" or party == "WOR") else "RVAR" if (party == "REP" or party == "CON") else "IOTH")
+        elif len(cand_code) > 7 and cand_code[0:8] == "USHouse_":
+            party = cand_code[8:]
+            contest = "G22" + "CON" + ("DVAR" if (party == "DEM" or party == "WOR") else "RVAR" if (party == "REP" or party == "CON") else "IOTH")
+        return contest
 
     return cand_code
 
