@@ -70,7 +70,7 @@ def makeTrivialBlock2BG(state, block_pop_path, block2source_map_path):
         json.dump(final_map, block2bg_file, ensure_ascii=False)
 
 
-def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False):
+def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False, source_year=None):
     """
     Invokes disaggregate: takes larger (precinct) data, block population map, smaller-larger mapping, and produces smaller (block) data (JSON)
     """
@@ -80,7 +80,7 @@ def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_pa
         block_pop_map = json.load(block_pop_json)
 
     # Option here to supply different disaggregation algorithm for isDemographicData == True
-    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg, state)
+    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg, state, source_year)
 
     log.dprint('Writing block_data_from_geo\n')
     with open(block_data_from_geo_path, 'w') as outf:

@@ -86,8 +86,18 @@ def cong_party_nc(cand_code):
         return "IOTH"
     return "UNK"
 
-def filter_prop_key(cand_code, state):
-    if state == "WA":
+def filter_prop_key(cand_code, state, source_year):
+    if source_year == 2008:
+        contest = None
+        if cand_code == "PresD":
+            contest = cand_code
+        elif cand_code == "PresR":
+            contest = cand_code
+        elif cand_code == "PresTot":
+            contest = cand_code          # Total not other, handle in Convert
+        return contest
+
+    elif state == "WA":
         """                 # Already done in extracting the data
         contest = None
         suffix = cand_code[6:]
@@ -388,7 +398,7 @@ def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_m
         log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
 
-def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state):
+def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state, source_year):
     """
         source_props is geojson or shapefile
         block_map {blkid: [source_key, ...], ...}
@@ -412,7 +422,7 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
             for prop_key, prop_value in source_props_item.items():
                 if prop_key != srckey and ok_to_agg(prop_key, prop_value):
                     # To handle more contests, call
-                    prop_key = filter_prop_key(prop_key, state)
+                    prop_key = filter_prop_key(prop_key, state, source_year)
                     if prop_key != None:
                         if not (prop_key in source_props_map[srckey]):
                             source_props_map[srckey][prop_key] = 0
