@@ -4,6 +4,8 @@
 
 # Inputs	XXgeo2010.pl XX000012010.pl XX000022010.pl (unzipped from XX2010.pl)
 
+## OBSOLETE ##
+
 import os
 import zipfile
 import pandas as pd

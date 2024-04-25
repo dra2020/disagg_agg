@@ -21,7 +21,11 @@ Below Census directory is a folder for each state named its 2-letter code
  infile1: g20185XX.csv, where XX = state code (lower case)
  infile2: e20185XX0005000.txt
 
+ 
+OBSOLETE
+
 """
+
 
 import pandas as pd
 import json

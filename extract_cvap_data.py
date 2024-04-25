@@ -30,6 +30,9 @@ Input:
 Output:
     For each state: SS/2018/2018CVAP_bg_nn.json
 
+
+OBSOLETE
+
 """
 
 from tqdm import tqdm
