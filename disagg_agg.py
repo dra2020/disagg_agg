@@ -70,7 +70,7 @@ def makeTrivialBlock2BG(state, block_pop_path, block2source_map_path):
         json.dump(final_map, block2bg_file, ensure_ascii=False)
 
 
-def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False, source_year=None):
+def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False, source_year=None, listpropsonly=False):
     """
     Invokes disaggregate: takes larger (precinct) data, block population map, smaller-larger mapping, and produces smaller (block) data (JSON)
     """
@@ -80,11 +80,12 @@ def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_pa
         block_pop_map = json.load(block_pop_json)
 
     # Option here to supply different disaggregation algorithm for isDemographicData == True
-    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg, state, source_year)
+    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg, state, source_year, listpropsonly)
 
-    log.dprint('Writing block_data_from_geo\n')
-    with open(block_data_from_geo_path, 'w') as outf:
-        json.dump(final_blk_map, outf, ensure_ascii=False)
+    if final_blk_map:
+        log.dprint('Writing block_data_from_geo\n')
+        with open(block_data_from_geo_path, 'w') as outf:
+            json.dump(final_blk_map, outf, ensure_ascii=False)
 
 
 def disaggregate_data_ca(state, stateCode, large_data_path, block2geo_path, block_key, block_data_from_geo_path):
@@ -111,7 +112,7 @@ def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, lar
         json.dump(aggregated_props, outf, ensure_ascii=False)
 
 
-def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, year=2016, isCVAP=False, destyear=2010, isACS=False): 
+def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, year=2016, isCVAP=False, destyear=2010, isACS=False, listpropsonly=False): 
     """
     This function drives the steps in the disaggregation/aggregation process.
     Each step reads from its input files and writes to its output file, so steps can be taken one at a time if desired
@@ -180,7 +181,9 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
 
         if (step == 1):
             log.dprint("*******************************************")
-            log.dprint("****** 1: Make map between geometries *****")
+            log.dprint("****** 1: Make map between geometries, if not already done *****")
+            if os.path.exists(block2source_map_path):
+                continue
             if (source_geo_path != None and block_geo_path != None and block2source_map_path != None):
                 if sourceIsBlkGrp and year == destyear:
                     makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
@@ -211,7 +214,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
                 if state == "KY" and source_key == "VTD":
                     source_key = "GEOID10"    # Hack because we need VTD source_key for Step 1, but need it to be GEOID10 for this step; no other steps need it
-                disaggregate_data(state, stateCode, source_data_path, source_key, block2source_map_path, block_key, block_pop_path, block_data_from_source_path, use_index_for_source_key, isDemographicData)
+                disaggregate_data(state, stateCode, source_data_path, source_key, block2source_map_path, block_key, block_pop_path, block_data_from_source_path, use_index_for_source_key, isDemographicData, listpropsonly=listpropsonly)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tSource data: ", source_data_path)

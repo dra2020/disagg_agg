@@ -398,7 +398,7 @@ def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_m
         log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
 
-def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state, source_year):
+def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state, source_year, listpropsonly):
     """
         source_props is geojson or shapefile
         block_map {blkid: [source_key, ...], ...}
@@ -433,6 +433,8 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
         pp = log.pretty_printer()
         log.dprint("Source Props totals")
         pp.pprint(source_props_total)        
+        if listpropsonly:
+            return None
 
         # Build map {prec1: {blk1: pct1, ...}, ...}
         # Then build map {prec1: {blk1: {key1: val1, ...}, ...}, ...} with largest_remainder for all keys on all precincts, so all values are integers
