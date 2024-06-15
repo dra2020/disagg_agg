@@ -214,7 +214,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
                 if state == "KY" and source_key == "VTD":
                     source_key = "GEOID10"    # Hack because we need VTD source_key for Step 1, but need it to be GEOID10 for this step; no other steps need it
-                disaggregate_data(state, stateCode, source_data_path, source_key, block2source_map_path, block_key, block_pop_path, block_data_from_source_path, use_index_for_source_key, isDemographicData, listpropsonly=listpropsonly)
+                disaggregate_data(state, stateCode, source_data_path, source_key, block2source_map_path, block_key, block_pop_path, block_data_from_source_path, use_index_for_source_key, isDemographicData, source_year=year, listpropsonly=listpropsonly)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tSource data: ", source_data_path)
