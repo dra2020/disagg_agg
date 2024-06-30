@@ -70,7 +70,7 @@ def makeTrivialBlock2BG(state, block_pop_path, block2source_map_path):
         json.dump(final_map, block2bg_file, ensure_ascii=False)
 
 
-def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False, source_year=None, listpropsonly=False):
+def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False, source_year=None, listpropsonly=False, sourceIsCsv=False):
     """
     Invokes disaggregate: takes larger (precinct) data, block population map, smaller-larger mapping, and produces smaller (block) data (JSON)
     """
@@ -80,7 +80,7 @@ def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_pa
         block_pop_map = json.load(block_pop_json)
 
     # Option here to supply different disaggregation algorithm for isDemographicData == True
-    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg, state, source_year, listpropsonly)
+    final_blk_map = disagg.make_block_props_map(log, large_data_path, block2geo_path, block_pop_map, large_key, use_index_for_large_key, ok_to_agg, state, source_year, listpropsonly, sourceIsCsv=sourceIsCsv)
 
     if final_blk_map:
         log.dprint('Writing block_data_from_geo\n')
@@ -112,7 +112,7 @@ def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, lar
         json.dump(aggregated_props, outf, ensure_ascii=False)
 
 
-def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, year=2016, isCVAP=False, destyear=2010, isACS=False, listpropsonly=False): 
+def process_state(state, steps, state_codes, year, destyear, config): 
     """
     This function drives the steps in the disaggregation/aggregation process.
     Each step reads from its input files and writes to its output file, so steps can be taken one at a time if desired
@@ -156,7 +156,15 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
     -- agg_data_from_source_path (ex: <destid>_from_<sourceid>_<stateCode>.json)
     """
 
-    stateCode = statecodes.make_state_codes()[state]      #  2-digit state census code
+    sourceIsBlkGrp = config["sourceIsBlkGrp"] if "sourceIsBlkGrp" in config else False
+    sourceIsCsv = config["sourceIsCsv"] if "sourceIsCsv" in config else False
+    isDemographicData = config["isDemographicData"] if "isDemographicData" in config else False
+    isCVAP = config["isCVAP"] if "isCVAP" in config else False
+    isACS = config["isACS"] if "isACS" in config else False
+    listpropsonly = config["listpropsonly"] if "listpropsonly" in config else False
+
+
+    stateCode = state_codes[state]      #  2-digit state census code
     source_key, dest_key, block_key, use_index_for_source_key = prepare.get_keys(state, not isDemographicData, year, destyear)
 
     paths = prepare.get_paths(state, not isDemographicData, year, isCVAP, destyear, isACS)
@@ -184,8 +192,8 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             log.dprint("****** 1: Make map between geometries, if not already done *****")
             if os.path.exists(block2source_map_path):
                 continue
-            if (source_geo_path != None and block_geo_path != None and block2source_map_path != None):
-                if sourceIsBlkGrp and year == destyear:
+            if ((source_geo_path != None or sourceIsBlkGrp) and block_geo_path != None and block2source_map_path != None):
+                if sourceIsBlkGrp and year >= destyear:
                     makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
                 else:
                     make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
@@ -214,7 +222,7 @@ def process_state(state, steps, sourceIsBlkGrp=False, isDemographicData=False, y
             elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
                 if state == "KY" and source_key == "VTD":
                     source_key = "GEOID10"    # Hack because we need VTD source_key for Step 1, but need it to be GEOID10 for this step; no other steps need it
-                disaggregate_data(state, stateCode, source_data_path, source_key, block2source_map_path, block_key, block_pop_path, block_data_from_source_path, use_index_for_source_key, isDemographicData, source_year=year, listpropsonly=listpropsonly)
+                disaggregate_data(state, stateCode, source_data_path, source_key, block2source_map_path, block_key, block_pop_path, block_data_from_source_path, use_index_for_source_key, isDemographicData, source_year=year, listpropsonly=listpropsonly, sourceIsCsv=sourceIsCsv)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tSource data: ", source_data_path)

@@ -312,7 +312,7 @@ def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_m
         log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
 
-def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state, source_year, listpropsonly):
+def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state, source_year, listpropsonly, sourceIsCsv):
     """
         source_props is geojson or shapefile
         block_map {blkid: [source_key, ...], ...}
@@ -324,24 +324,39 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
     with open(block_map_path) as json_file:
         block_map = json.load(json_file)
 
-        source_props = gpd.read_file(source_props_path)
         source_props_total = {}
-
         # Build source props map {srckey1: {prop1: val1, ...}, ...}
         source_props_map = {}
-        for i in source_props.index:
-            source_props_item = source_props.loc[i]
-            srckey = i if use_index_for_source_key else str(source_props_item[source_key])
-            source_props_map[srckey] = {}
-            for prop_key, prop_value in source_props_item.items():
-                if prop_key != srckey and ok_to_agg(prop_key, prop_value):
-                    # To handle more contests, call
-                    prop_key = filter_prop_key(prop_key, state, source_year)
-                    if prop_key != None:
-                        if not (prop_key in source_props_map[srckey]):
-                            source_props_map[srckey][prop_key] = 0
-                        source_props_map[srckey][prop_key] += int(prop_value)
-                        sum_props(source_props_total, prop_key, prop_value)
+        if (sourceIsCsv):
+            with open(source_props_path) as source_csv_file:
+                source_rows = csv.DictReader(source_csv_file, delimiter=",")
+                for row in tqdm(source_rows):
+                    srprec = ""
+                    if source_key in row:
+                        srprec = row[source_key]
+                        source_props_map[srprec] = {}
+                        for prop_key, prop_value in row.items():
+                            if prop_key != source_key and ok_to_agg(prop_key, prop_value):
+                                source_props_map[srprec][prop_key] = prop_value
+                                sum_props(source_props_total, prop_key, prop_value)
+                    else:
+                        print("Blkprops csv: No key", end="\n")
+                        continue
+        else:
+            source_props = gpd.read_file(source_props_path)
+            for i in source_props.index:
+                source_props_item = source_props.loc[i]
+                srckey = i if use_index_for_source_key else str(source_props_item[source_key])
+                source_props_map[srckey] = {}
+                for prop_key, prop_value in source_props_item.items():
+                    if prop_key != srckey and ok_to_agg(prop_key, prop_value):
+                        # To handle more contests, call
+                        prop_key = filter_prop_key(prop_key, state, source_year)
+                        if prop_key != None:
+                            if not (prop_key in source_props_map[srckey]):
+                                source_props_map[srckey][prop_key] = 0
+                            source_props_map[srckey][prop_key] += int(prop_value)
+                            sum_props(source_props_total, prop_key, prop_value)
                     
 
         pp = log.pretty_printer()
