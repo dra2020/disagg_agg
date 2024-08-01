@@ -69,6 +69,25 @@ def makeTrivialBlock2BG(state, block_pop_path, block2source_map_path):
     with open(block2source_map_path, "w") as block2bg_file:
         json.dump(final_map, block2bg_file, ensure_ascii=False)
 
+def makeTrivialBlock2BG_CT(state, year, block_pop_path, block2source_map_path, acs_root):
+    cvap_path = f'{acs_root}ct_cvap_{str(year)}_2020_b.csv'
+
+    final_map = {}
+    with open(block_pop_path) as block_pop_json, open(cvap_path) as cvap_csv_file:
+        block_pop_map = json.load(block_pop_json)
+        cvap_csv_data = csv.DictReader(cvap_csv_file, delimiter=',')
+
+        for row in tqdm(cvap_csv_data):
+            final_map[row["GEOID20"]] = row["BLKGRP22"]
+
+        #for block in block_pop_map.keys():
+        #    if block[0:12] in inv_cross_map:
+        #        final_map[block] = [inv_cross_map[block[0:12]]]
+        #    else:
+        #        print("BG not found in cross map:", block[0:12])
+    with open(block2source_map_path, "w") as block2bg_file:
+        json.dump(final_map, block2bg_file, ensure_ascii=False)
+
 
 def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_path, block_key, block_pop_path, block_data_from_geo_path, use_index_for_large_key=False, isDemographicData=False, source_year=None, listpropsonly=False, sourceIsCsv=False):
     """
@@ -194,7 +213,10 @@ def process_state(state, steps, state_codes, year, destyear, config):
                 continue
             if ((source_geo_path != None or sourceIsBlkGrp) and block_geo_path != None and block2source_map_path != None):
                 if sourceIsBlkGrp and year >= destyear:
-                    makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
+                    if state == "CT" and year >= 2022 and destyear == 2020:
+                        makeTrivialBlock2BG_CT(state, year, block_pop_path, block2source_map_path, paths["acs_root"])
+                    else:
+                        makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
                 else:
                     make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
             else:
