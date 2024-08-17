@@ -214,7 +214,16 @@ def filter_prop_key(cand_code, state, source_year):
             case "G22CON":
                 contest = "G22" + "CON" + party_code(party)
         return contest
-    """                 # Code for origianl file from BJR; superseded by RDH file
+    elif state == "PR" and source_year == 2016:
+        contest = None
+        match cand_code[0:4]:
+            case "GOV1":
+                contest = "G16" + "GOV" + ("DVAR" if cand_code == "GOV16PPD" else "RVAR" if cand_code == "GOV16PNP" else "IOTH")
+            case "RC16":
+                contest = "G16" + "CON" + ("DVAR" if cand_code == "RC16PPD" else "RVAR" if cand_code == "RC16PNP" else "IOTH")
+        return contest
+
+    """                 # Code for original file from BJR; superseded by RDH file
     elif state == "NY":
         contest = None
         if len(cand_code) > 3 and cand_code[0:4] == "Gov_":
