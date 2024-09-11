@@ -99,7 +99,8 @@ def filter_prop_key(cand_code, state, source_year):
         elif cand_code == "PresTot":
             contest = cand_code          # Total not other, handle in Convert
         return contest
-
+    elif source_year <= 2020:
+        return cand_code
     elif state == "WA":
         """                 # Already done in extracting the data
         contest = None
