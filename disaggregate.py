@@ -99,6 +99,42 @@ def filter_prop_key(cand_code, state, source_year):
         elif cand_code == "PresTot":
             contest = cand_code          # Total not other, handle in Convert
         return contest
+    elif source_year == 2014 and state == "MA":
+        contest = None
+        suffix = cand_code[5:6]
+        match cand_code[0:5]:
+            case "SEN14": 
+                contest = "SEN14" + ("DXXX" if suffix == "D" else "RXXX" if suffix == "R" else "IOTH")
+            case "GOV14":
+                contest = "GOV14" + ("DXXX" if suffix == "D" else "RXXX" if suffix == "R" else "IOTH")
+        return contest
+    elif source_year == 2014 and state == "TX":
+        contest = None
+        suffix = cand_code[5:6]
+        match cand_code[0:5]:
+            case "SEN14": 
+                contest = "SEN14" + ("DXXX" if suffix == "D" else "RXXX" if suffix == "R" else "IOTH")
+            case "GOV14":
+                contest = "GOV14" + ("DXXX" if suffix == "D" else "RXXX" if suffix == "R" else "IOTH")
+        return contest
+    elif source_year == 2014 and state == "MN":
+        contest = None
+        suffix = cand_code[5:6]
+        if cand_code[0:4] == "AG14":
+            contest = "AG14" + ("DXXX" if suffix == "D" else "RXXX" if suffix == "R" else "IOTH")
+        else:
+            match cand_code[0:5]:
+                case "SEN14": 
+                    contest = "SEN14" + ("DXXX" if suffix == "D" else "RXXX" if suffix == "R" else "IOTH")
+                case "GOV14":
+                    contest = "GOV14" + ("DXXX" if suffix == "D" else "RXXX" if suffix == "R" else "IOTH")
+        return contest
+    elif source_year == 2014 and state == "NC":
+        contest = None
+        suffix = cand_code[5:6]
+        if cand_code[0:8] == "EL14G_US":
+            contest = cand_code
+        return contest
     elif source_year <= 2020:
         return cand_code
     elif state == "WA":
