@@ -200,7 +200,7 @@ def process_state(state, steps, state_codes, year, destyear, config):
     agg_data_from_source_path = paths["agg_data_from_source_path"]
     working_path = paths["working_path"]
 
-    logfile_name = "output" + "_".join(str(step) for step in steps) + "_" + str(year) + "to" + str(destyear) + ("" if isDemographicData else "_elec") + ("_cvap" if isCVAP else "") + ".log"
+    logfile_name = "output" + "_".join(str(step) for step in steps) + "_" + str(year) + "to" + str(destyear) + ("" if isDemographicData else "_elec") + ("_cvap" if isCVAP else "") + ("_listprops" if listpropsonly else "_fulldisagg") + ".log"
     print("Setting logging output to ", working_path + logfile_name)
     log.set_output(working_path + logfile_name, "Disagg/Agg Logging")
  

@@ -164,7 +164,8 @@ def filter_prop_key(cand_code, state, source_year):
                 contest = "G22SC" + ("3" if cand_code[4:6] == "03" else "5") + cong_party_nc(cand_code)
         return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
-          state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY"):
+          state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV"):
+        # Mostly RDH States
         contest = None
         party = cand_code[6:7]
         prefix = cand_code[0:1]
