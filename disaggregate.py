@@ -11,6 +11,9 @@ import math
 from tqdm import tqdm
 from fractions import Fraction
 
+# tracking
+track_counties = True
+
 def getf(ds, f, blk_pct):
     return 0 if not (f in ds) else (round(float(ds[f]) * blk_pct, 3))
     
@@ -47,12 +50,20 @@ def handle_datasets(blk, blk_pct, datasets):
         blk["PACC18"] = getf(d10t, "PacC", blk_pct)
         blk["NATC18"] = getf(d10t, "NatC", blk_pct)
 
-def sum_props(prop_totals_map, prop_key, prop_value):
+def sum_props(prop_totals_map, prop_key, prop_value, countymap=None, countyfp=None, countyname=None):
     try:
         intval = int(prop_value)
         if not (prop_key in prop_totals_map):
             prop_totals_map[prop_key] = 0
         prop_totals_map[prop_key] += intval
+
+        if countymap != None and countyfp != None:
+            if not (countyfp in countymap):
+                countymap[countyfp] = {"FP": countyfp, "Name": countyname if countyname != None else ''}
+            if not (prop_key in countymap[countyfp]):
+                countymap[countyfp][prop_key] = 0
+            countymap[countyfp][prop_key] += intval
+
     except:
         ignore = 0
     return
@@ -372,6 +383,7 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
         block_map = json.load(json_file)
 
         source_props_total = {}
+        source_props_cnty_total = {}
         # Build source props map {srckey1: {prop1: val1, ...}, ...}
         source_props_map = {}
         if (sourceIsCsv):
@@ -395,6 +407,8 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
                 source_props_item = source_props.loc[i]
                 srckey = i if use_index_for_source_key else str(source_props_item[source_key])
                 source_props_map[srckey] = {}
+                countyfp = source_props_item["COUNTYFP"] if track_counties and ("COUNTYFP" in source_props_item) else None
+                countyname = source_props_item["CNTY_NAME"] if track_counties and ("CNTY_NAME" in source_props_item) else None
                 for prop_key, prop_value in source_props_item.items():
                     if prop_key != srckey and ok_to_agg(prop_key, prop_value):
                         # To handle more contests, call
@@ -403,12 +417,13 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
                             if not (prop_key in source_props_map[srckey]):
                                 source_props_map[srckey][prop_key] = 0
                             source_props_map[srckey][prop_key] += int(prop_value)
-                            sum_props(source_props_total, prop_key, prop_value)
+                            sum_props(source_props_total, prop_key, prop_value, countymap=source_props_cnty_total, countyfp=countyfp, countyname=countyname)
                     
 
         pp = log.pretty_printer()
         log.dprint("Source Props totals")
         pp.pprint(source_props_total)        
+        pp.pprint(source_props_cnty_total)
         if listpropsonly:
             return None
 
@@ -517,6 +532,7 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
         all_precs.add(srprec)
 
     props_total = {}
+    props_cnty_total = {}
     seen_precs = set({})
     for srprec, blk_pcts in prec_blk_pct_map.items():
         if srprec in source_props_map:
@@ -531,7 +547,8 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
                 elif ok_to_agg(key):
                     try:
                         distribute_value(prec_blk_key_map[srprec], blk_pcts, key, int(value), srprec)
-                        sum_props(props_total, key, value)
+                        countyfp = blk[2:5] if track_counties else None
+                        sum_props(props_total, key, value, countymap=props_cnty_total, countyfp=countyfp)
                     except:
                         if not (key in cant_disagg_set):
                             print("Can't disagg key: ", key)
@@ -544,6 +561,7 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
     pp = log.pretty_printer()
     log.dprint("Props totals from Distributing")
     pp.pprint(props_total)        
+    pp.pprint(props_cnty_total)
     return prec_blk_key_map
 
 def getf(ds, f):
@@ -593,6 +611,7 @@ def make_final_blk_map(log, prec_blk_key_map):
     log.dprint("Build block to fields map (disaggregate)")
     print("Build block to fields map (disaggregate)")
     props_total = {}
+    props_cnty_total = {}
     final_blk_map = {}              # {blkid: {prop1: val1, prop2: val2, ...}, ...}
     for srprec, blks in prec_blk_key_map.items():
         for block, key_map in blks.items():
@@ -602,10 +621,12 @@ def make_final_blk_map(log, prec_blk_key_map):
                 if not (key in final_blk_map[block]):
                     final_blk_map[block][key] = 0
                 final_blk_map[block][key] += value      # accumulate in case a block receives values from > 1 precinct
-                sum_props(props_total, key, value)
+                countyfp = block[2:5] if track_counties else None
+                sum_props(props_total, key, value, countymap=props_cnty_total, countyfp=countyfp)
 
     pp = log.pretty_printer()
     log.dprint("Props totals")
-    pp.pprint(props_total)        
+    pp.pprint(props_total)
+    pp.pprint(props_cnty_total)
 
     return final_blk_map
