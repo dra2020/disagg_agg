@@ -35,7 +35,8 @@ def ok_to_agg(prop, value=0):
             prop.lower() != 'blkgrp' and prop.lower()[0:6] != 'logrec' and prop.lower() != 'state' and prop.lower() != 'sumlevel' and
             prop.lower() != 'tract' and prop.lower()[0:7] != 'correct' and prop.lower() != 'vtd_name' and prop.lower()[0:5] != 'vtdst' and
             prop.lower() != 'prec_id' and prop.lower() != 'enr_desc' and prop.lower().endswith('_fips') != True and
-            prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18' and prop.lower() != 'geometry'):
+            prop.lower()[0:5] != 'state' and prop.lower() != 'p16' and prop.lower() != 'p18' and prop.lower() != 'geometry' and
+            prop.lower() != 'srprec' and prop.lower() != 'srprec_key' and prop.lower() != 'geo_type'):
         # Now make sure it's numeric
         try:
             intval = int(value)
@@ -107,17 +108,18 @@ def disaggregate_data(state, stateCode, large_data_path, large_key, block2geo_pa
             json.dump(final_blk_map, outf, ensure_ascii=False)
 
 
-def disaggregate_data_ca(state, stateCode, large_data_path, block2geo_path, block_key, block_data_from_geo_path):
+def disaggregate_data_ca(state, stateCode, large_data_path, block2geo_path, block_key, block_data_from_geo_path, source_year=None, listpropsonly=False):
     """
     Invokes disaggregate: takes larger (precinct) data, block population map, smaller-larger mapping, and produces smaller (block) data (JSON)
     """
     log.dprint('Making block_data_from_geo:\n\t(', large_data_path, ',', block2geo_path, ') ==>\n\t\t', block_data_from_geo_path)
 
-    final_blk_map = disagg.make_block_props_map_ca(log, large_data_path, block2geo_path)
+    final_blk_map = disagg.make_block_props_map_ca(log, large_data_path, block2geo_path, ok_to_agg, source_year, listpropsonly)
 
-    log.dprint('Writing block_data_from_geo\n')
-    with open(block_data_from_geo_path, 'w') as outf:
-        json.dump(final_blk_map, outf, ensure_ascii=False)
+    if final_blk_map:
+        log.dprint('Writing block_data_from_geo\n')
+        with open(block_data_from_geo_path, 'w') as outf:
+            json.dump(final_blk_map, outf, ensure_ascii=False)
 
 
 def aggregate_source2dest(state, stateCode, block_data_path, block2geo_path, large_geo_key, dest_data_path, srcIsGeojson=False):
@@ -239,8 +241,8 @@ def process_state(state, steps, state_codes, year, destyear, config):
         elif (step == 3):
             log.dprint("*******************************************")
             log.dprint("************* 3: Disaggregate *************")
-            if (state == "CA" and destyear == 2020 and year == 2018 and source_data_path != None and block2source_map_path != None and not isDemographicData):
-                disaggregate_data_ca(state, stateCode, source_data_path, block2source_map_path, block_key, block_data_from_source_path)
+            if (state == "CA" and destyear == 2020 and (year == 2018 or year == 2022) and source_data_path != None and block2source_map_path != None and not isDemographicData):
+                disaggregate_data_ca(state, stateCode, source_data_path, block2source_map_path, block_key, block_data_from_source_path, source_year=year, listpropsonly=listpropsonly)
             elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
                 if state == "KY" and source_key == "VTD":
                     source_key = "GEOID10"    # Hack because we need VTD source_key for Step 1, but need it to be GEOID10 for this step; no other steps need it

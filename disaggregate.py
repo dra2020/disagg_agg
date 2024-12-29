@@ -12,7 +12,7 @@ from tqdm import tqdm
 from fractions import Fraction
 
 # tracking
-track_counties = True
+track_counties = False
 
 def getf(ds, f, blk_pct):
     return 0 if not (f in ds) else (round(float(ds[f]) * blk_pct, 3))
@@ -231,6 +231,28 @@ def filter_prop_key(cand_code, state, source_year):
                             contest = prefix + year + "SC6" + party_code(party)
 
         return contest
+    elif state == "CA" and source_year == 2022:
+        contest = None
+        year = str(source_year)[2:4]
+        prefix = "G"
+        sameparty = True if cand_code[6:8] == "02" else False
+        party = "IOTH" if sameparty else "DVAR" if cand_code[3:6] == "DEM" else "RVAR" if cand_code[3:6] == "REP" else "IOTH"       # Use other for 2nd candidate in same party
+        match cand_code[0:3]:
+            case "USS": 
+                contest = f'{prefix}{year}SEN{party}'
+            case "GOV":
+                contest = f'{prefix}{year}GOV{party}'
+            case "LTG":
+                contest = f'{prefix}{year}LTG{party}'
+            case "TRS":
+                contest = f'{prefix}{year}TRE{party}'
+            case "SOS":
+                contest = f'{prefix}{year}SOS{party}'
+            case "ATG":
+                contest = f'{prefix}{year}ATG{party}'
+            #case "CNG":                                    # In CA 2022, 6 congressional contests were Dem vs Dem, so we're not going to add the data
+            #    contest = f'{prefix}{year}CON{party}'
+        return contest
     elif state == "MN":
         contest = None
         match cand_code[0:2]:
@@ -305,7 +327,7 @@ def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_m
             {blkid: {'TOT': 3.0, 'ASN': 1.0, ..., 'TOT18': 2.0}}
         use_index_for_source_key: True ==> Use geopandas index as key
     """
-
+    """
     source_props = gpd.read_file(source_props_path)
     with open(block_map_path) as json_file:
         block_map = json.load(json_file)
@@ -369,6 +391,7 @@ def make_block_props_map_old(log, source_props_path, block_map_path, block_pop_m
     if not bool(failed_props_set):
         log.dprint("For some rows, these props could not convert to float: ", failed_props_set)
     return final_blk_map
+    """
 
 def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, source_key, use_index_for_source_key, ok_to_agg, state, source_year, listpropsonly, sourceIsCsv):
     """
@@ -422,8 +445,9 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
 
         pp = log.pretty_printer()
         log.dprint("Source Props totals")
-        pp.pprint(source_props_total)        
-        pp.pprint(source_props_cnty_total)
+        pp.pprint(source_props_total)
+        if track_counties:
+            pp.pprint(source_props_cnty_total)
         if listpropsonly:
             return None
 
@@ -475,10 +499,10 @@ def srprec_key(county, srprec):
     countyfp = str(int(county) * 2 - 1).zfill(3)
     return "06" + countyfp + str(srprec)
 
-def keep_key(key):
-    return key[0:3] == "ATG" or key[0:3] == "GOV" or key[0:3] == "USS" or key[0:3] == "LTG" or key[0:3] == "PRS"
+#def keep_key(key):
+#    return key[0:3] == "ATG" or key[0:3] == "GOV" or key[0:3] == "USS" or key[0:3] == "LTG" or key[0:3] == "PRS"
 
-def make_block_props_map_ca(log, source_props_path, block_map_path):
+def make_block_props_map_ca(log, source_props_path, block_map_path, ok_to_agg, source_year, listpropsonly):
     """
         source_props is CSV [COUNTY, SRPREC, props...]   or may have SRPREC_KEY instead of COUNTY
         block_map is CSV [COUNTY, ..., BLOCK_KEY, SRPREC, ]
@@ -493,6 +517,8 @@ def make_block_props_map_ca(log, source_props_path, block_map_path):
     source_props_map = {}
     with open(source_props_path) as source_csv_file, open(block_map_path) as block_csv_file:
         source_rows = csv.DictReader(source_csv_file, delimiter=",")
+        source_props_total = {}
+        source_props_cnty_total = {}
         for row in tqdm(source_rows):
             srprec = ""
             if "SRPREC_KEY" in row:
@@ -501,7 +527,24 @@ def make_block_props_map_ca(log, source_props_path, block_map_path):
                 if row["COUNTY"] == "CNTYTOT":
                     continue
                 srprec = srprec_key(row["COUNTY"], row["SRPREC"])
-            source_props_map[srprec] = row
+                print("Using COUNTY")
+            if srprec != "":
+                source_props_map[srprec] = {"SRPREC_KEY": srprec}
+                countyfp = row["COUNTY"] if track_counties and ("COUNTY" in row) else None
+                countyname = row["CNTY_NAME"] if track_counties and ("CNTY_NAME" in row) else None
+                for prop_key, prop_value in row.items():
+                    prop_key = filter_prop_key(prop_key, "CA", source_year)
+                    if prop_key != None and ok_to_agg(prop_key, prop_value):
+                        source_props_map[srprec][prop_key] = prop_value
+                        sum_props(source_props_total, prop_key, prop_value, countymap=source_props_cnty_total, countyfp=countyfp, countyname=countyname)
+
+        pp = log.pretty_printer()
+        log.dprint("Source Props totals")
+        pp.pprint(source_props_total)        
+        if track_counties:
+            pp.pprint(source_props_cnty_total)
+        if listpropsonly:
+            return None
 
         # Build map {prec1: {blk1: pct1, ...}, ...}
         # Then build map {prec1: {blk1: {key1: val1, ...}, ...}, ...} with largest_remainder for all keys on all precincts, so all values are integers
@@ -520,7 +563,7 @@ def make_block_props_map_ca(log, source_props_path, block_map_path):
                     prec_blk_pct_map[srprec][block] = 0
                 prec_blk_pct_map[srprec][block] += pctsrprec
         # verify_pcts()
-        prec_blk_key_map = make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, keep_key)
+        prec_blk_key_map = make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg)
         return make_final_blk_map(log, prec_blk_key_map)
 
 def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
@@ -533,6 +576,7 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
 
     props_total = {}
     props_cnty_total = {}
+    left_out_props_total = {}
     seen_precs = set({})
     for srprec, blk_pcts in prec_blk_pct_map.items():
         if srprec in source_props_map:
@@ -557,11 +601,27 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
         else:
             log.dprint("Prec Key not found: ", srprec)
 
-    print("Left out precs", all_precs - seen_precs, sep=" ")
     pp = log.pretty_printer()
     log.dprint("Props totals from Distributing")
-    pp.pprint(props_total)        
-    pp.pprint(props_cnty_total)
+    pp.pprint(props_total)
+    if track_counties:
+        pp.pprint(props_cnty_total)
+
+    left_out_precs = all_precs - seen_precs
+    if len(left_out_precs):
+        #print("Left out precs", left_out_precs, sep=" ")
+        log.dprint("Props totals left out from Distributing")
+        ppc = log.pretty_printer_compact()
+        for srprec in left_out_precs:
+            has_nonzero = False
+            for key, value in source_props_map[srprec].items():
+                if ok_to_agg(key):
+                    has_nonzero = has_nonzero or (int(value) != 0)
+                    sum_props(left_out_props_total, key, value)
+            if has_nonzero:
+                ppc.pprint(source_props_map[srprec])
+        pp.pprint(left_out_props_total)
+
     return prec_blk_key_map
 
 def getf(ds, f):
@@ -627,6 +687,7 @@ def make_final_blk_map(log, prec_blk_key_map):
     pp = log.pretty_printer()
     log.dprint("Props totals")
     pp.pprint(props_total)
-    pp.pprint(props_cnty_total)
+    if track_counties:
+        pp.pprint(props_cnty_total)
 
     return final_blk_map

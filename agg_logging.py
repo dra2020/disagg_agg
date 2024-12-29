@@ -24,6 +24,12 @@ def pretty_printer():
     else:
         return pprint.PrettyPrinter(indent=4)
 
+def pretty_printer_compact():
+    if out_file != None:
+        return pprint.PrettyPrinter(indent=4, stream=out_file, compact=True, width=210)
+    else:
+        return pprint.PrettyPrinter(indent=4, compact=True, width=210)
+
 def close():
     if out_file != None:
         out_file.close()
