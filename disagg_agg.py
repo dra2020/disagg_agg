@@ -211,16 +211,16 @@ def process_state(state, steps, state_codes, year, destyear, config):
         if (step == 1):
             log.dprint("*******************************************")
             log.dprint("****** 1: Make map between geometries, if not already done *****")
-            if os.path.exists(block2source_map_path):
-                continue
             if ((source_geo_path != None or sourceIsBlkGrp) and block_geo_path != None and block2source_map_path != None):
                 if sourceIsBlkGrp and year >= destyear:
-                    if state == "CT" and year >= 2022 and destyear == 2020:
-                        makeTrivialBlock2BG_CT(state, year, block_pop_path, block2source_map_path, paths["acs_root"])
-                    else:
-                        makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
+                    if not os.path.exists(block2source_map_path):
+                        if state == "CT" and year >= 2022 and destyear == 2020:
+                            makeTrivialBlock2BG_CT(state, year, block_pop_path, block2source_map_path, paths["acs_root"])
+                        else:
+                            makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
                 else:
-                    make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
+                    if must_update_block_map(block2source_map_path, source_geo_path):
+                        make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
             else:
                 log.dprint("Required input missing:")
                 log.dprint("\tSource geo: ", source_geo_path)
@@ -287,6 +287,13 @@ def process_state(state, steps, state_codes, year, destyear, config):
                 log.dprint("Required input missing:")
                 log.dprint("\tSource data: ", source_geo_path)
                 log.dprint("\tAggregated data: ", agg_data_from_source_path)
+ 
+def must_update_block_map(block2source_map_path, source_geo_path):
+    if not os.path.exists(block2source_map_path):
+        return True
+    if os.path.getmtime(block2source_map_path) < os.path.getmtime(source_geo_path):
+        return True
+    return False
 
 
 # ****************************************************************
