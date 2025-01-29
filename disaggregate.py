@@ -74,14 +74,24 @@ def sum_props(prop_totals_map, prop_key, prop_value, countymap=None, countyfp=No
     so it simply slows this process considerably
 """
 # TODO This really needs state and year (5/3/23)
-def cong_party_wa(cand_code):
+def cong_party_wa(source_year, cand_code):
     consufx = cand_code[4:9]
-    if (consufx == "01DEL" or consufx == "02LAR" or consufx == "03PER" or consufx == "04WHI" or consufx == "05HIL" or 
-        consufx == "06KIL" or consufx == "07JAY" or consufx == "08SCH" or consufx == "09SMI" or consufx == "10STR"):
-        return "DVAR"
-    if (consufx == "01CAV" or consufx == "02MAT" or consufx == "03KEN" or consufx == "04NEW" or consufx == "05ROD" or 
-        consufx == "06KRE" or consufx == "07MOO" or consufx == "08LAR" or consufx == "09BAS" or consufx == "10SWA"):
-        return "RVAR"
+    if source_year == 2022:
+        if (consufx == "01DEL" or consufx == "02LAR" or consufx == "03PER" or consufx == "04WHI" or consufx == "05HIL" or 
+            consufx == "06KIL" or consufx == "07JAY" or consufx == "08SCH" or consufx == "09SMI" or consufx == "10STR"):
+            return "DVAR"
+        if (consufx == "01CAV" or consufx == "02MAT" or consufx == "03KEN" or consufx == "04NEW" or consufx == "05ROD" or 
+            consufx == "06KRE" or consufx == "07MOO" or consufx == "08LAR" or consufx == "09BAS" or consufx == "10SWA"):
+            return "RVAR"
+    elif source_year == 2024:
+        if (cand_code[4:6] == "04" or cand_code[4:6] == "09"):      # Two R's in 4 and two D's in 9; don't report any results
+            return None
+        if (consufx == "01DEL" or consufx == "02LAR" or consufx == "03PER" or consufx == "05CON" or 
+            consufx == "06RAN" or consufx == "07JAY" or consufx == "08GOW" or consufx == "10STR"):  # Date mislabelled Schrier
+            return "DVAR"
+        if (consufx == "01BRE" or consufx == "02HAR" or consufx == "03KEN" or consufx == "05BAU" or 
+            consufx == "06MAC" or consufx == "07ALE" or consufx == "08GOE" or consufx == "10HEW"):
+            return "RVAR"
     return "IOTH"
 
 def cong_party_nc(cand_code):
@@ -149,20 +159,48 @@ def filter_prop_key(cand_code, state, source_year):
     elif source_year <= 2020:
         return cand_code
     elif state == "WA":
-        """                 # Already done in extracting the data
         contest = None
-        suffix = cand_code[6:]
-        match cand_code[3:5]:
-            case "SE": 
-                contest = cand_code[0:3] + "SEN" + ("DMUR" if suffix.startswith("MUR") else "RSMI" if suffix.startswith("SMI") else "IOTH")
-            case "SO":
-                contest = cand_code[0:3] + "SOS" + ("DHOB" if suffix.startswith("HOB") else "IAND" if suffix.startswith("AND") else "ROTH")
-            case "C0":
-                contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
-            case "C1":
-                contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
-        """
-        return cand_code
+        if source_year == 2022:
+            """                 # Already done in extracting the data
+            contest = None
+            suffix = cand_code[6:]
+            match cand_code[3:5]:
+                case "SE": 
+                    contest = cand_code[0:3] + "SEN" + ("DMUR" if suffix.startswith("MUR") else "RSMI" if suffix.startswith("SMI") else "IOTH")
+                case "SO":
+                    contest = cand_code[0:3] + "SOS" + ("DHOB" if suffix.startswith("HOB") else "IAND" if suffix.startswith("AND") else "ROTH")
+                case "C0":
+                    contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
+                case "C1":
+                    contest = cand_code[0:3] + "CON" + cong_party_wa(cand_code)
+            """
+        elif source_year == 2024:
+            suffix = cand_code[6:]
+            match cand_code[3:6]:
+                case "SEN": 
+                    contest = cand_code[0:3] + "SEN" + ("DCAN" if suffix.startswith("CANT") else "RGAR" if suffix.startswith("GARC") else "IOTH")
+                case "SOS":
+                    contest = cand_code[0:3] + "SOS" + ("DHOB" if suffix.startswith("HOBB") else "RWHI" if suffix.startswith("WHIT") else "IOTH")
+                case "PRS":
+                    contest = cand_code[0:3] + "PRE" + ("DHAR" if suffix.startswith("HARR") else "RTRU" if suffix.startswith("TRUM") else "IOTH")
+                case "GOV":
+                    contest = cand_code[0:3] + "GOV" + ("DFER" if suffix.startswith("FERG") else "RREI" if suffix.startswith("REIC") else "IOTH")
+                case "LTG":
+                    contest = cand_code[0:3] + "LTG" + ("DHEC" if suffix.startswith("HECK") else "RMAT" if suffix.startswith("MATT") else "IOTH")
+                case "TRE":
+                    contest = cand_code[0:3] + "TRE" + ("DPEL" if suffix.startswith("PELL") else "RHAN" if suffix.startswith("HANE") else "IOTH")
+                case "AUD":
+                    contest = cand_code[0:3] + "AUD" + ("DMCC" if suffix.startswith("MCCA") else "RHAW" if suffix.startswith("HAWK") else "IOTH")
+                case "ATG":
+                    contest = cand_code[0:3] + "ATG" + ("DBRO" if suffix.startswith("BROW") else "RSER" if suffix.startswith("SERR") else "IOTH")
+                case "CPL":
+                    contest = cand_code[0:3] + "PLC" + ("DUPT" if suffix.startswith("UPTH") else "RBEU" if suffix.startswith("BEUT") else "IOTH")
+                case _:
+                    if cand_code[3:5] == "C0" or cand_code[3:5] == "C1":
+                        party_suffix = cong_party_wa(source_year, cand_code)
+                        if party_suffix != None:
+                            contest = cand_code[0:3] + "CON" + party_suffix
+        return contest
     elif state == "NC":
         contest = None
         suffix = cand_code[6:]
@@ -442,6 +480,8 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
                             source_props_map[srckey][prop_key] += int(prop_value)
                             sum_props(source_props_total, prop_key, prop_value, countymap=source_props_cnty_total, countyfp=countyfp, countyname=countyname)
                     
+        # Hook to move props from 1 srckey to another, in rare cases
+        adjust_source_props_map(state, source_year, source_props_map)
 
         pp = log.pretty_printer()
         log.dprint("Source Props totals")
@@ -609,7 +649,7 @@ def make_prec_blk_key_map(log, prec_blk_pct_map, source_props_map, ok_to_agg):
 
     left_out_precs = all_precs - seen_precs
     if len(left_out_precs):
-        #print("Left out precs", left_out_precs, sep=" ")
+        log.dprint(f'Left out precs: {left_out_precs}')
         log.dprint("Props totals left out from Distributing")
         ppc = log.pretty_printer_compact()
         for srprec in left_out_precs:
@@ -691,3 +731,14 @@ def make_final_blk_map(log, prec_blk_key_map):
         pp.pprint(props_cnty_total)
 
     return final_blk_map
+
+def adjust_source_props_map(state, source_year, source_props_map):
+    if state == "WA" and source_year == 2024:
+        # One precinct that they dump extra votes in, where actual precinct is not determined
+        if "KI00008888" in source_props_map and "KI00000990" in source_props_map:
+            row = source_props_map["KI00008888"]
+            for key, value in row.items():
+                source_props_map["KI00000990"][key] += value
+                source_props_map["KI00008888"][key] = 0
+
+
