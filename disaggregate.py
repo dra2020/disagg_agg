@@ -158,6 +158,16 @@ def filter_prop_key(cand_code, state, source_year):
         return contest
     elif source_year <= 2020:
         return cand_code
+    elif source_year == 2024 and (state != "WA"):       # Add states handled more fully as they are obtained
+        # NYT data
+        contest = None
+        if cand_code == "votes_dem":
+            contest = "G24PREDHAR"
+        elif cand_code == "votes_rep":
+            contest = "G24PRERTRU"
+        elif cand_code == "votes_total":
+            contest = "G24PREIOTH"
+        return contest
     elif state == "WA":
         contest = None
         if source_year == 2022:
