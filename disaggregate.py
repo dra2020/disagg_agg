@@ -110,6 +110,21 @@ def cong_party_nc(cand_code):
 def party_code(party):
     return "DVAR" if party == "D" else "RVAR" if party == "R" else "IOTH"
 
+def ohio_supreme_court(year, cand_code):
+    if year == 2022:
+        if cand_code[7:10] == "FIS" or cand_code[7:10] == "JAM":
+            return "SC1"
+        else:
+            return "SC2"
+    elif year == 2024:
+        if cand_code[7:10] == "DET" or cand_code[7:10] == "STE":
+            return "SC1"
+        elif cand_code[7:10] == "SHA" or cand_code[7:10] == "DON":
+            return "SC2"
+        else:           # FOR, HAW
+            return "SC3"
+    return "UNK"
+
 def filter_prop_key(cand_code, state, source_year):
     if source_year == 2008:
         contest = None
@@ -158,7 +173,7 @@ def filter_prop_key(cand_code, state, source_year):
         return contest
     elif source_year <= 2020:
         return cand_code
-    elif source_year == 2024 and (state != "WA" and state != "AL" and state != "SC"):       # Add states handled more fully as they are obtained
+    elif source_year == 2024 and (state != "WA" and state != "AL" and state != "SC" and state != "LA" and state != "OH"):       # Add states handled more fully as they are obtained
         # NYT data
         contest = None
         if cand_code == "votes_dem":
@@ -262,10 +277,7 @@ def filter_prop_key(cand_code, state, source_year):
                     # Supreme Court varies by state
                     case "JUS":
                         if state == "OH":
-                            if cand_code[7:10] == "FIS" or cand_code[7:10] == "JAM":
-                                contest = prefix + year + "SC1" + party_code(party)
-                            else:
-                                contest = prefix + year + "SC2" + party_code(party)
+                            contest = prefix + year + ohio_supreme_court(source_year, cand_code) + party_code(party)
                         elif state == "NM" and (party == "D" or party == "R"):
                             contest = prefix + year + "SC1" + party_code(party)
                     case "JS2":
