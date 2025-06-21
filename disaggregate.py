@@ -171,6 +171,28 @@ def filter_prop_key(cand_code, state, source_year):
         if cand_code[0:8] == "EL14G_US":
             contest = cand_code
         return contest
+    elif state == "DC":
+        contest = None
+        party = cand_code[6:7]
+        prefix = cand_code[0:1]
+
+        if prefix == "G" or prefix == "R" or prefix == "S":     # Only General, Runoff or Special, not Primary
+            # Congress
+            year = cand_code[1:3]
+            contest_code = cand_code[3:6]
+            match contest_code:
+                case "PRE":
+                    contest = prefix + year + "PRE" + party_code(party)
+                case "MAY":  # Mayor, use GOV
+                    contest = prefix + year + "GOV" + party_code(party)
+                case "USS":  # Shadow Senator, only for 2020 since we already included it
+                    contest = (prefix + year + "USS" + party_code(party)) if source_year == 2020 else None
+                case "ATG":
+                    contest = prefix + year + "ATG" + party_code(party)
+                case "DEL":  # Delegate to Congress
+                    contest = prefix + year + "CON" + party_code(party)
+                    
+        return contest
     elif source_year <= 2020:
         return cand_code
     elif source_year == 2024 and (state != "WA" and state != "AL" and state != "SC" and state != "LA" and state != "OH" and state != "AZ"):       # Add states handled more fully as they are obtained
