@@ -195,7 +195,8 @@ def filter_prop_key(cand_code, state, source_year):
         return contest
     elif source_year <= 2020:
         return cand_code
-    elif source_year == 2024 and (state != "WA" and state != "AL" and state != "SC" and state != "LA" and state != "OH" and state != "AZ"):       # Add states handled more fully as they are obtained
+    elif source_year == 2024 and (state == "DE" and state == "HI" and state == "IA" and state == "KY" and state == "MA" and state == "MD" and state == "MN" and state == "MT" and
+                                  state == "NH" and state == "NM" and state == "UT" and state == "WV" and state == "WY"):
         # NYT data
         contest = None
         if cand_code == "votes_dem":
@@ -316,7 +317,7 @@ def filter_prop_key(cand_code, state, source_year):
                             contest = prefix + year + "SC6" + party_code(party)
 
         return contest
-    elif state == "CA" and source_year == 2022:
+    elif state == "CA" and (source_year == 2022 or source_year == 2024):
         contest = None
         year = str(source_year)[2:4]
         prefix = "G"
@@ -335,6 +336,8 @@ def filter_prop_key(cand_code, state, source_year):
                 contest = f'{prefix}{year}SOS{party}'
             case "ATG":
                 contest = f'{prefix}{year}ATG{party}'
+            case "PRS":
+                contest = f'{prefix}{year}PRE{party}'
             #case "CNG":                                    # In CA 2022, 6 congressional contests were Dem vs Dem, so we're not going to add the data
             #    contest = f'{prefix}{year}CON{party}'
         return contest

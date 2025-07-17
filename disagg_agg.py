@@ -61,6 +61,18 @@ def make_block_map(state, stateCode, large_geo_path, large_geo_key, block_geo_pa
     with open(block2geo_path, 'w') as outf:
         json.dump(block_map, outf, ensure_ascii=False)
 
+"""
+TBD: when CA has all of their 2024 data, we need to felsh out this function. We should make the block2src map from the sr2blk map that they publish.
+def make_block_map_from_map(state, stateCode, source_path, source_key, block2source_map_path):
+    final_map = {}
+    with open(source_path) as src_blk_map_csv:
+        src_blk_map = csv.load(src_blk_map_csv)
+        for block in block_pop_map.keys():
+            final_map[block] = [block[0:12]]
+    with open(block2source_map_path, "w") as block2bg_file:
+        json.dump(final_map, block2bg_file, ensure_ascii=False)
+"""
+
 def makeTrivialBlock2BG(state, block_pop_path, block2source_map_path):
     final_map = {}
     with open(block_pop_path) as block_pop_json:
@@ -219,6 +231,8 @@ def process_state(state, steps, state_codes, year, destyear, config):
                         else:
                             makeTrivialBlock2BG(state, block_pop_path, block2source_map_path)
                 else:
+                    #if (state == "CA" and year == 2024):    TBD CA 2024
+                    #    make_block_map_from_map(state, stateCode, source_geo_path, source_key, block2source_map_path)
                     if must_update_block_map(block2source_map_path, source_geo_path):
                         make_block_map(state, stateCode, source_geo_path, source_key, block_geo_path, block_key, block2source_map_path, year, isDemographicData, use_index_for_source_key, sourceIsBlkGrp)
             else:
@@ -241,6 +255,7 @@ def process_state(state, steps, state_codes, year, destyear, config):
         elif (step == 3):
             log.dprint("*******************************************")
             log.dprint("************* 3: Disaggregate *************")
+            # CA 2024 TBD
             if (state == "CA" and destyear == 2020 and (year == 2018 or year == 2022) and source_data_path != None and block2source_map_path != None and not isDemographicData):
                 disaggregate_data_ca(state, stateCode, source_data_path, block2source_map_path, block_key, block_data_from_source_path, source_year=year, listpropsonly=listpropsonly)
             elif (source_data_path != None and block2source_map_path != None and block_pop_path != None and block_data_from_source_path != None):
