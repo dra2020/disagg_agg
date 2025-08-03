@@ -260,6 +260,15 @@ def filter_prop_key(cand_code, state, source_year):
             case "SSC":
                 contest = "G22SC" + ("3" if cand_code[4:6] == "03" else "5") + cong_party_nc(cand_code)
         return contest
+    elif state == "WI" and source_year == 2024:
+        contest = None
+        if cand_code[0:3] == "PRE" and cand_code[3:6] != "TOT":
+            contest = "G24PRE" + ("DVAR" if cand_code[3:6] == "DEM" else "RVAR" if cand_code[3:6] == "REP" else "IOTH")
+        elif cand_code[0:3] == "USS" and cand_code[3:6] != "TOT":
+            contest = "G24SEN" + ("DVAR" if cand_code[3:6] == "DEM" else "RVAR" if cand_code[3:6] == "REP" else "IOTH")
+        elif cand_code[0:3] == "USH" and cand_code[3:6] != "TOT":
+            contest = "G24CON" + ("DVAR" if cand_code[3:6] == "DEM" else "RVAR" if cand_code[3:6] == "REP" else "IOTH")
+        return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
           state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV" or state == "KS" or state == "TN" or
           state == "OK"):
