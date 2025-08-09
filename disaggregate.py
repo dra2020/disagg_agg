@@ -269,6 +269,11 @@ def filter_prop_key(cand_code, state, source_year):
         elif cand_code[0:3] == "USH" and cand_code[3:6] != "TOT":
             contest = "G24CON" + ("DVAR" if cand_code[3:6] == "DEM" else "RVAR" if cand_code[3:6] == "REP" else "IOTH")
         return contest
+    elif state == "VA" and source_year == 2022:
+        contest = None
+        if cand_code[0:6] == "G22HOR":
+            contest = "G24CON" + ("DVAR" if cand_code[6:9] == "DEM" else "RVAR" if cand_code[6:9] == "REP" else "IOTH")
+        return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
           state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV" or state == "KS" or state == "TN" or
           state == "OK"):
