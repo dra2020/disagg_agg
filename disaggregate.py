@@ -125,7 +125,9 @@ def ohio_supreme_court(year, cand_code):
             return "SC3"
     return "UNK"
 
-def filter_prop_key(cand_code, state, source_year):
+def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
+    if listpropsonly:
+        return cand_code
     if source_year == 2008:
         contest = None
         if cand_code == "PresD":
@@ -276,7 +278,7 @@ def filter_prop_key(cand_code, state, source_year):
         return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
           state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV" or state == "KS" or state == "TN" or
-          state == "OK"):
+          state == "OK" or state == "NH"):
         # Mostly RDH States
         contest = None
         party = cand_code[6:7]
@@ -285,7 +287,10 @@ def filter_prop_key(cand_code, state, source_year):
         if prefix == "G" or prefix == "R" or prefix == "S":     # Only General, Runoff or Special, not Primary
             # Congress
             if cand_code[1:4] == "CON":
-                contest = prefix + (str(source_year)[2:4]) + "CON" + party_code(party)
+                if state == "NH":
+                    contest = prefix + (str(source_year)[2:4]) + "CON" + party_code(cand_code[5:6])     # Only 1 digit for contest
+                else:
+                    contest = prefix + (str(source_year)[2:4]) + "CON" + party_code(party)
             else:
                 year = cand_code[1:3]
                 contest_code = cand_code[3:6]
@@ -537,7 +542,7 @@ def make_block_props_map(log, source_props_path, block_map_path, block_pop_map, 
                 for prop_key, prop_value in source_props_item.items():
                     if prop_key != srckey and ok_to_agg(prop_key, prop_value):
                         # To handle more contests, call
-                        prop_key = filter_prop_key(prop_key, state, source_year)
+                        prop_key = filter_prop_key(prop_key, state, source_year, listpropsonly)
                         if prop_key != None:
                             if not (prop_key in source_props_map[srckey]):
                                 source_props_map[srckey][prop_key] = 0
@@ -637,7 +642,7 @@ def make_block_props_map_ca(log, source_props_path, block_map_path, ok_to_agg, s
                 countyfp = row["COUNTY"] if track_counties and ("COUNTY" in row) else None
                 countyname = row["CNTY_NAME"] if track_counties and ("CNTY_NAME" in row) else None
                 for prop_key, prop_value in row.items():
-                    prop_key = filter_prop_key(prop_key, "CA", source_year)
+                    prop_key = filter_prop_key(prop_key, "CA", source_year, listpropsonly)
                     if prop_key != None and ok_to_agg(prop_key, prop_value):
                         source_props_map[srprec][prop_key] = prop_value
                         sum_props(source_props_total, prop_key, prop_value, countymap=source_props_cnty_total, countyfp=countyfp, countyname=countyname)
