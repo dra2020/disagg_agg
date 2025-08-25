@@ -197,8 +197,8 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
         return contest
     elif source_year <= 2020:
         return cand_code
-    elif source_year == 2024 and (state == "DE" and state == "HI" and state == "IA" and state == "KY" and state == "MA" and state == "MD" and state == "MN" and state == "MT" and
-                                  state == "NH" and state == "NM" and state == "UT" and state == "WV" and state == "WY"):
+    elif source_year == 2024 and (state == "DE" or state == "HI" or state == "IA" or state == "KY" or state == "MA" or state == "MN" or state == "MT" or
+                                  state == "NM" or state == "UT" or state == "WV" or state == "WY"):
         # NYT data
         contest = None
         if cand_code == "votes_dem":
@@ -278,21 +278,21 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
         return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
           state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV" or state == "KS" or state == "TN" or
-          state == "OK" or state == "NH"):
+          state == "OK" or state == "NH" or state == "MD"):
         # Mostly RDH States
         contest = None
         party = cand_code[6:7]
         prefix = cand_code[0:1]
+        year = str(source_year)[2:4]
 
         if prefix == "G" or prefix == "R" or prefix == "S":     # Only General, Runoff or Special, not Primary
             # Congress
             if cand_code[1:4] == "CON":
                 if state == "NH":
-                    contest = prefix + (str(source_year)[2:4]) + "CON" + party_code(cand_code[5:6])     # Only 1 digit for contest
+                    contest = prefix + year + "CON" + party_code(cand_code[5:6])     # Only 1 digit for contest
                 else:
-                    contest = prefix + (str(source_year)[2:4]) + "CON" + party_code(party)
+                    contest = prefix + year + "CON" + party_code(party)
             else:
-                year = cand_code[1:3]
                 contest_code = cand_code[3:6]
                 match contest_code:
                     case "PRE":
@@ -336,7 +336,7 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
                             contest = prefix + year + "SC6" + party_code(party)
 
         return contest
-    elif state == "CA" and (source_year == 2022 or source_year == 2024):
+    elif state == "CA" and (source_year == 2022):
         contest = None
         year = str(source_year)[2:4]
         prefix = "G"
@@ -360,6 +360,25 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
             #case "CNG":                                    # In CA 2022, 6 congressional contests were Dem vs Dem, so we're not going to add the data
             #    contest = f'{prefix}{year}CON{party}'
         return contest
+    elif state == "CA" and (source_year == 2024):
+        contest = None
+        year = str(source_year)[2:4]
+        prefix = "G"
+        match cand_code[3:4]:
+            case "S":
+                if cand_code[4:7] == "Dem":
+                    contest = f'{prefix}{year}SENDVAR'
+                elif cand_code[4:7] == "Rep":
+                    contest = f'{prefix}{year}SENRVAR'
+            case "P":
+                if cand_code[4:7] == "Dem":
+                    contest = f'{prefix}{year}PREDVAR'
+                elif cand_code[4:7] == "Rep":
+                    contest = f'{prefix}{year}PRERVAR'
+                elif cand_code[4:7] == "Oth":
+                    contest = f'{prefix}{year}PREIOTH'
+        return contest
+
     elif state == "MN":
         contest = None
         match cand_code[0:2]:
