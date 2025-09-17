@@ -73,7 +73,6 @@ def sum_props(prop_totals_map, prop_key, prop_value, countymap=None, countyfp=No
     The data we have obtained often has all of the state legislative races, which are numerous and we are not using,
     so it simply slows this process considerably
 """
-# TODO This really needs state and year (5/3/23)
 def cong_party_wa(source_year, cand_code):
     consufx = cand_code[4:9]
     if source_year == 2022:
@@ -197,7 +196,7 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
         return contest
     elif source_year <= 2020:
         return cand_code
-    elif source_year == 2024 and (state == "DE" or state == "HI" or state == "IA" or state == "KY" or state == "MA" or state == "MN" or state == "MT" or
+    elif source_year == 2024 and (state == "DE" or state == "HI" or state == "IA" or state == "KY" or state == "MA" or state == "MT" or
                                   state == "NM" or state == "UT" or state == "WV" or state == "WY"):
         # NYT data
         contest = None
@@ -381,24 +380,29 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
 
     elif state == "MN":
         contest = None
+        year = str(source_year)[2:4]
         match cand_code[0:2]:
             case "MN":
                 match cand_code[2:4]:
                     case "GO":
                         if cand_code[5] != "T":
-                            contest = "G22" + "GOV" + party_code(cand_code[5])
+                            contest = f'G{year}GOV{party_code(cand_code[5])}'
                     case "SO":
                         if cand_code[5] != "T":
-                            contest = "G22" + "SOS" + party_code(cand_code[5])
+                            contest = f'G{year}SOS{party_code(cand_code[5])}'
                     case "AU":
                         if cand_code[5] != "T":
-                            contest = "G22" + "AUD" + party_code(cand_code[5])
+                            contest = f'G{year}AUD{party_code(cand_code[5])}'
                     case "AG":
                         if cand_code[4] != "T":
-                            contest = "G22" + "ATG" + party_code(cand_code[4])
+                            contest = f'G{year}ATG{party_code(cand_code[4])}'
             case "US":
                 if cand_code[2:5] == "REP" and cand_code[5] != "T":
-                    contest = "G22" + "CON" + party_code(cand_code[5])
+                    contest = f'G{year}CON{party_code(cand_code[5])}'
+                if cand_code[2:5] == "PRS" and cand_code[5] != "T":
+                    contest = f'G{year}PRE{party_code(cand_code[5])}'
+                if cand_code[2:5] == "SEN" and cand_code[5] != "T":
+                    contest = f'G{year}SEN{party_code(cand_code[5])}'
         return contest
     elif state == "AK":
         contest = None
