@@ -250,7 +250,7 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
                         if party_suffix != None:
                             contest = cand_code[0:3] + "CON" + party_suffix
         return contest
-    elif state == "NC":
+    elif state == "NC" and source_year == 2022:
         contest = None
         suffix = cand_code[6:]
         match cand_code[1:4]:
@@ -277,7 +277,7 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
         return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
           state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV" or state == "KS" or state == "TN" or
-          state == "OK" or state == "NH" or state == "MD"):
+          state == "OK" or state == "NH" or state == "MD" or state == "NC" or state == "MO"):
         # Mostly RDH States
         contest = None
         party = cand_code[6:7]
@@ -288,51 +288,54 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
             # Congress
             if cand_code[1:4] == "CON":
                 if state == "NH":
-                    contest = prefix + year + "CON" + party_code(cand_code[5:6])     # Only 1 digit for contest
+                    contest = f'{prefix}{year}CON{party_code(cand_code[5:6])}'     # Only 1 digit for contest
                 else:
-                    contest = prefix + year + "CON" + party_code(party)
+                    contest = f'{prefix}{year}CON{party_code(party)}'
+            elif cand_code[1:4] == "SCJ":   # State Supreme Court Justice
+                if state == "NC":
+                    contest = f'{prefix}{year}SC{cand_code[5:6]}{party_code(party)}'
             else:
                 contest_code = cand_code[3:6]
                 match contest_code:
                     case "PRE":
-                        contest = prefix + year + "PRE" + party_code(party)
+                        contest = f'{prefix}{year}PRE{party_code(party)}'
                     case "GOV":
-                        contest = prefix + year + "GOV" + party_code(party)
+                        contest = f'{prefix}{year}GOV{party_code(party)}'
                     case "USS":
-                        contest = prefix + year + "USS" + party_code(party)
+                        contest = f'{prefix}{year}USS{party_code(party)}'
                     case "SOS":
-                        contest = prefix + year + "SOS" + party_code(party)
+                        contest = f'{prefix}{year}SOS{party_code(party)}'
                     case "ATG":
-                        contest = prefix + year + "ATG" + party_code(party)
+                        contest = f'{prefix}{year}ATG{party_code(party)}'
                     case "LTG":
-                        contest = prefix + year + "LTG" + party_code(party)
+                        contest = f'{prefix}{year}LTG{party_code(party)}'
                     case "TRE":
-                        contest = prefix + year + "TRE" + party_code(party)
+                        contest = f'{prefix}{year}TRE{party_code(party)}'
                     case "COM":
-                        contest = prefix + year + "CMP" + party_code(party)
+                        contest = f'{prefix}{year}CMP{party_code(party)}'
                     case "CFO":
-                        contest = prefix + year + "TRE" + party_code(party)
+                        contest = f'{prefix}{year}TRE{party_code(party)}'
                     case "AUD":
-                        contest = prefix + year + "AUD" + party_code(party)
+                        contest = f'{prefix}{year}AUD{party_code(party)}'
                     
                     # Supreme Court varies by state
                     case "JUS":
                         if state == "OH":
-                            contest = prefix + year + ohio_supreme_court(source_year, cand_code) + party_code(party)
+                            contest = f'{prefix}{year}{ohio_supreme_court(source_year, cand_code)}{party_code(party)}'
                         elif state == "NM" and (party == "D" or party == "R"):
-                            contest = prefix + year + "SC1" + party_code(party)
+                            contest = f'{prefix}{year}SC1{party_code(party)}'
                     case "JS2":
                         if state == "NM":
-                            contest = prefix + year + "SC2" + party_code(party)
+                            contest = f'{prefix}{year}SC2{party_code(party)}'
                     case "CJU":
                         if state == "OH":
-                            contest = prefix + year + "SCC" + party_code(party)
+                            contest = f'{prefix}{year}SCC{party_code(party)}'
                     case "AJ5":
                         if state == "AL":
-                            contest = prefix + year + "SC5" + party_code(party)
+                            contest = f'{prefix}{year}SC5{party_code(party)}'
                     case "AJ6":
                         if state == "AL":
-                            contest = prefix + year + "SC6" + party_code(party)
+                            contest = f'{prefix}{year}SC6{party_code(party)}'
 
         return contest
     elif state == "CA" and (source_year == 2022):
