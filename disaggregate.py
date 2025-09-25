@@ -197,7 +197,7 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
     elif source_year <= 2020:
         return cand_code
     elif source_year == 2024 and (state == "DE" or state == "HI" or state == "IA" or state == "KY" or state == "MA" or state == "MT" or
-                                  state == "NM" or state == "UT" or state == "WV" or state == "WY"):
+                                  state == "NM" or state == "WV" or state == "WY"):
         # NYT data
         contest = None
         if cand_code == "votes_dem":
@@ -277,7 +277,7 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
         return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
           state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV" or state == "KS" or state == "TN" or
-          state == "OK" or state == "NH" or state == "MD" or state == "NC" or state == "MO"):
+          state == "OK" or state == "NH" or state == "MD" or state == "NC" or state == "MO" or state == "UT"):
         # Mostly RDH States
         contest = None
         party = cand_code[6:7]
