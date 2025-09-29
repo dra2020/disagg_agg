@@ -277,8 +277,8 @@ def filter_prop_key(cand_code, state, source_year, listpropsonly=False):
         return contest
     elif (state == "WI" or state == "TX" or state == "LA" or state == "HI" or state == "OH" or state == "AL" or state == "MT" or state == "GA" or state == "FL" or
           state == "SC" or state == "IL" or state == "MS" or state == "NM" or state == "NY" or state == "AZ" or state == "NV" or state == "KS" or state == "TN" or
-          state == "OK" or state == "NH" or state == "MD" or state == "NC" or state == "MO" or state == "UT"):
-        # Mostly RDH States
+          state == "OK" or state == "NH" or state == "MD" or state == "NC" or state == "MO" or state == "UT" or state == "IN"):
+        # Mostly RDH States; also VEST
         contest = None
         party = cand_code[6:7]
         prefix = cand_code[0:1]
